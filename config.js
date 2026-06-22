@@ -2,11 +2,11 @@
 // Cliente: preencha as 4 linhas abaixo ANTES de publicar. Não precisa mexer em mais nada.
 
 // 1) URL do Apps Script (Implantar > Nova implantação > App da Web > copiar URL)
-const GAS_URL = "COLE_AQUI_A_GAS_URL_DO_CLIENTE";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz9NR3LxW7N3fiTRZkTsa5xu3HN5ZPFfmq1B-fFkLIL_eJcNTwza5QIkhoTTE5oozjw/exec";
 
 // 2) URL pública do site no GitHub Pages — usada nos links de compartilhar produto
 const CFG_SITE_URL = "https://st0r33.github.io/STORE/";
 
 // 3) e 4) Cloudinary (conta do cliente) — usados pelo admin pra subir imagens
-const CFG_CLOUDINARY_CLOUD  = "COLE_SEU_CLOUD_NAME";
-const CFG_CLOUDINARY_PRESET = "COLE_SEU_UPLOAD_PRESET";
+const CFG_CLOUDINARY_CLOUD  = "dusvj8h2a";
+const CFG_CLOUDINARY_PRESET = "Orah_Buy";

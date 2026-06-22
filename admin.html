@@ -32,23 +32,10 @@
     /* ══ THEME ENGINE ════════════════════════════════════════════════ */
     html.theme-light {
       --g: #FF5500; --c: #FF7A35; --o: #FF5500; --r: #cc2200;
-      --dark: #f0f0f2; --d1: #f8f8fa; --d2: #ffffff; --d3: #eaeaec;
-      --d4: #d8d8db; --d5: #c8c8cc; --text: #1a1a2e;
-      --muted: rgba(26,26,46,.5); --border: rgba(255,85,0,.2);
+      --dark: #f5f5f7; --d1: #ebebed; --d2: #e0e0e2; --d3: #d0d0d3;
+      --d4: #c0c0c4; --d5: #acacb0; --text: #1a1a2e;
+      --muted: rgba(26,26,46,.55); --border: rgba(255,85,0,.22);
     }
-    html.theme-light #atmo { opacity: 0; }
-    html.theme-light body { background: #f0f0f2; }
-    html.theme-light .lcard,
-    html.theme-light #loginScreen { background: #f0f0f2; }
-    html.theme-light .kcard,
-    html.theme-light .prow,
-    html.theme-light .sec,
-    html.theme-light .card { background: #ffffff; border-color: rgba(0,0,0,.08); }
-    html.theme-light input,
-    html.theme-light select,
-    html.theme-light textarea { background: #ffffff !important; color: #1a1a2e !important; border-color: rgba(0,0,0,.15) !important; }
-    html.theme-light .tab-btn { color: rgba(26,26,46,.5); }
-    html.theme-light .tab-btn.on { color: #FF5500; border-bottom-color: #FF5500; }
 
     .theme-toggle {
       display: flex; background: rgba(255,85,0,.1);
@@ -1037,9 +1024,6 @@
       background: rgba(244, 67, 54, .13);
       color: var(--r)
     }
-
-    .at-on { background: rgba(244,67,54,.13); color: var(--r); }
-    .at-off { background: rgba(0,200,83,.13); color: #00c853; }
 
     /* MODAL PRODUTO */
     #moverlay {
@@ -4766,7 +4750,7 @@
     // PRODUTOS
     async function loadProds() {
       if (!allProds.length) {
-        const r = await apiGet("getProdutos", { verTodos: "1" }).catch(() => ({ produtos: [] }));
+        const r = await apiGet("getProdutos").catch(() => ({ produtos: [] }));
         allProds = r.produtos || [];
       }
       renderProds();
@@ -4803,7 +4787,7 @@
       <div class="pprice">${fmt(p["Preço (R$)"])}</div>
       <div class="pacts">
         <button class="actbtn ae" data-prod-id="${p["ID"]}">✏️</button>
-        <button class="actbtn ${p["Status"] === "Ativo" ? "at-on" : "at-off"}" data-toggle-id="${p["ID"]}" data-toggle-status="${p["Status"] === "Ativo" ? "Inativo" : "Ativo"}" title="${p["Status"] === "Ativo" ? "Inativar" : "Ativar"}">${p["Status"] === "Ativo" ? "🔴" : "🟢"}</button>
+        <button class="actbtn ad" data-del-id="${p["ID"]}">🗑️</button>
       </div>
     </div>`;
       }).join("");
@@ -4989,19 +4973,6 @@
         } else toast(res.error || "Erro ao salvar", "err");
       } catch (e) { toast("Erro de conexão", "err"); }
       btn.disabled = false; btn.textContent = "💾 Salvar Produto";
-    }
-
-    async function toggleProd(id, novoStatus) {
-      const prod = allProds.find(p => p["ID"] === id);
-      if (!prod) return;
-      try {
-        const updated = Object.assign({}, prod, { "Status": novoStatus });
-        const res = await apiGet("salvarProduto", updated);
-        if (res.ok) {
-          toast(novoStatus === "Ativo" ? "Produto ativado" : "Produto inativado");
-          allProds = []; await loadProds();
-        } else toast(res.error || "Erro", "err");
-      } catch (e) { toast("Erro de conexão", "err"); }
     }
 
     function delProd(id, nome) {
@@ -8260,7 +8231,7 @@
     async function loadCategorias() {
       try {
         const r = await apiGet("getCategorias");
-        allCats = r.categorias || [];
+        allCats = (r.categorias || []).filter(c => c.Status !== "Inativo");
         if (!allCats.length) throw new Error("vazio");
         saveCatsToStorage(allCats);
       } catch(e) {
@@ -8298,7 +8269,7 @@
           </div>
           <div class="cat-actions">
             <button class="cat-btn cat-edit-btn" data-cat-id="${c.ID}">✏️</button>
-            <button class="cat-btn cat-toggle-btn ${(c.Status || "Ativo") === "Ativo" ? "at-on" : "at-off"}" data-cat-id="${c.ID}" title="${(c.Status || "Ativo") === "Ativo" ? "Inativar" : "Ativar"}">${(c.Status || "Ativo") === "Ativo" ? "🔴" : "🟢"}</button>
+            <button class="cat-btn cat-del-btn" data-cat-id="${c.ID}">🗑️</button>
           </div>
         </div>`).join("");
     }
@@ -8335,19 +8306,6 @@
       try {
         await apiGet("salvarCategoria", { id: cat.ID, nome: cat.Nome, emoji: cat.Emoji, cor: cat.Cor_Hex, status: cat.Status });
       } catch(e) {}
-    }
-
-    async function toggleCat(cat) {
-      const novoStatus = (cat.Status || "Ativo") === "Ativo" ? "Inativo" : "Ativo";
-      try {
-        const updated = Object.assign({}, cat, { Status: novoStatus });
-        const res = await apiGet("salvarCategoria", updated);
-        if (res.ok) {
-          toast(novoStatus === "Ativo" ? "Categoria ativada" : "Categoria inativada");
-          await loadCategorias();
-          renderCatPage();
-        } else toast(res.error || "Erro", "err");
-      } catch (e) { toast("Erro de conexão", "err"); }
     }
 
     async function deleteCat(id, nome) {
@@ -8719,12 +8677,13 @@
     // Lista de produtos
     document.getElementById("plist").addEventListener("click", e => {
       const editBtn = e.target.closest(".ae");
-      const togBtn = e.target.closest("[data-toggle-id]");
+      const delBtn = e.target.closest(".ad");
       if (editBtn) {
         const prod = allProds.find(p => p["ID"] === editBtn.dataset.prodId);
         if (prod) editProd(prod);
-      } else if (togBtn) {
-        toggleProd(togBtn.dataset.toggleId, togBtn.dataset.toggleStatus);
+      } else if (delBtn) {
+        const prod = allProds.find(p => p["ID"] === delBtn.dataset.delId);
+        if (prod) delProd(prod["ID"], prod["Nome do Produto"] || "");
       }
     });
 
@@ -8781,13 +8740,13 @@
     // Botões de Categorias
     document.getElementById("page-cat").addEventListener("click", e => {
       const editBtn = e.target.closest(".cat-edit-btn");
-      const togBtn = e.target.closest(".cat-toggle-btn");
+      const delBtn = e.target.closest(".cat-del-btn");
       if (editBtn) {
         const cat = (typeof allCats !== "undefined" ? allCats : []).find(c => c.ID === editBtn.dataset.catId);
         if (cat) openCatForm(cat);
-      } else if (togBtn) {
-        const cat = (typeof allCats !== "undefined" ? allCats : []).find(c => c.ID === togBtn.dataset.catId);
-        if (cat) toggleCat(cat);
+      } else if (delBtn) {
+        const cat = (typeof allCats !== "undefined" ? allCats : []).find(c => c.ID === delBtn.dataset.catId);
+        if (cat) deleteCat(cat.ID, cat.Nome || "");
       }
     });
 

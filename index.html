@@ -705,8 +705,6 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 10px
     }
-    @media (min-width: 640px) { #pgrid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
-    @media (min-width: 1024px) { #pgrid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
 
     .sk {
       background: linear-gradient(90deg, var(--d2) 25%, var(--d3) 50%, var(--d2) 75%);
@@ -1031,18 +1029,15 @@
       top: 9px;
       right: 9px;
       z-index: 5;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      font-size: 17px;
-      background: rgba(0,0,0,.82);
-      border: 1.5px solid rgba(255,255,255,.25);
-      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      font-size: 14px;
+      background: rgba(4, 9, 15, .72);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 2px 8px rgba(0,0,0,.5);
       cursor: pointer
     }
 
@@ -1905,27 +1900,13 @@
     .price-pill:active { opacity: .7; }
     /* ══ PWA INSTALL BAR ═══════════════════════════════════════════════ */
     #pwa-bar {
-      position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%) translateY(200px);
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(120px);
       z-index: 500; background: var(--d1); border: 1px solid var(--border);
-      border-radius: 20px; padding: 16px 16px 14px;
-      width: calc(100% - 32px); max-width: 480px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.5); transition: transform .45s cubic-bezier(.34,1.56,.64,1);
+      border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+      width: calc(100% - 32px); max-width: 420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4); transition: transform .4s cubic-bezier(.34,1.56,.64,1);
     }
     #pwa-bar.show { transform: translateX(-50%) translateY(0); }
-    #pwa-bar-close {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-      color: var(--muted); width: 28px; height: 28px; border-radius: 50%;
-      font-size: 16px; line-height: 1; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #pwa-bar-close:hover { background: rgba(255,255,255,.15); color: var(--text); }
-    .pwa-benefits { display: flex; gap: 8px; margin: 8px 0 12px; flex-wrap: wrap; }
-    .pwa-chip {
-      display: flex; align-items: center; gap: 5px;
-      background: rgba(255,85,0,.08); border: 1px solid rgba(255,85,0,.18);
-      border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--muted);
-    }
     /* ══ FAV BUTTON ═════════════════════════════════════════════════════ */
     .fav-btn {
       position: absolute; top: 7px; left: 7px; z-index: 3;
@@ -2088,20 +2069,13 @@
 
   <!-- PWA INSTALL BAR -->
   <div id="pwa-bar">
-    <button id="pwa-bar-close" onclick="dismissPWA()" aria-label="Fechar">×</button>
-    <div style="display:flex;align-items:center;gap:12px">
-      <img src="icon-192.png" width="44" height="44" style="border-radius:12px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.4)" alt="OrahBuy">
-      <div>
-        <div style="font-weight:800;font-size:14px;color:var(--text);line-height:1.2">Instalar OrahBuy</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Adicione à sua tela inicial</div>
-      </div>
+    <img src="icon-192.png" width="32" height="32" style="border-radius:8px;flex-shrink:0" alt="">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;font-size:13px;color:var(--text)">Instalar OrahBuy</div>
+      <div style="font-size:11px;color:var(--muted)">Acesse sem internet, mais rápido</div>
     </div>
-    <div class="pwa-benefits">
-      <span class="pwa-chip">⚡ Abre instantâneo</span>
-      <span class="pwa-chip">📶 Funciona offline</span>
-      <span class="pwa-chip">🔔 Receba novidades</span>
-    </div>
-    <button onclick="installPWA()" style="width:100%;background:linear-gradient(135deg,#FF5500,#FF7A35);color:#fff;border:none;padding:11px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;letter-spacing:.3px">📲 Instalar agora</button>
+    <button onclick="installPWA()" style="background:var(--g);color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap">Instalar</button>
+    <button onclick="dismissPWA()" style="background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">×</button>
   </div>
 
   <!-- HEADER -->
@@ -2454,7 +2428,6 @@
     let catA = "", searchQ = "", priceMax = 0, cart = JSON.parse(localStorage.getItem("obc") || "[]");
     let cup = null, freteA = null, pagS = "PIX", prodA = null, cIdx = 0, cMedia = [];
     let banIdx = 0;
-    let _modalHistPushed = false, _cartHistPushed = false;
 
     // ── API ──────────────────────────────────────────────
     async function apiG(action, params = {}) {
@@ -2541,13 +2514,6 @@
           if (rc.categorias && rc.categorias.length) {
             localStorage.setItem("ob_cats", JSON.stringify(rc.categorias));
             renderDynCats(rc.categorias);
-            // Remove produtos de categorias inativas do allProds
-            const activeCatNames = new Set(
-              rc.categorias.filter(c => c.Status !== "Inativo").map(c => c.Nome)
-            );
-            allProds = allProds.filter(p => !p["Categoria"] || activeCatNames.has(p["Categoria"]));
-            prods = allProds;
-            applyF();
           }
         } catch(e) {}
 
@@ -2688,7 +2654,7 @@
     }
     function applyF() {
       let l = allProds;
-      if (catA) l = l.filter(p => (p["Categoria"] || "").trim().toLowerCase() === catA.trim().toLowerCase());
+      if (catA) l = l.filter(p => p["Categoria"] === catA);
       if (priceMax > 0) l = l.filter(p => pf(p) <= priceMax);
       if (searchQ) l = l.filter(p =>
         (p["Nome do Produto"] || "").toLowerCase().includes(searchQ) ||
@@ -2831,7 +2797,6 @@
       cMedia = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"], p["Vídeo (URL)"]].filter(Boolean);
       if (!cMedia.length) cMedia = [""];
       buildCar();
-      _modalHistPushed = true;
       history.pushState({ gjModal: "product" }, "");
       document.getElementById("po").classList.remove("hidden");
       document.body.style.overflow = "hidden";
@@ -2875,7 +2840,7 @@
       const po = document.getElementById("po");
       if (po.classList.contains("hidden")) return;
       po.classList.add("hidden"); document.body.style.overflow = "";
-      if (_modalHistPushed) { _modalHistPushed = false; history.back(); }
+      if (history.state && history.state.gjModal) history.back();
     }
 
     // Swipe down to close modal
@@ -2938,7 +2903,6 @@
 
     function openCart() {
       renderCart(); renderFretes2(); renderSum();
-      _cartHistPushed = true;
       history.pushState({ gjModal: "cart" }, "");
       document.getElementById("co2").classList.remove("hidden"); document.body.style.overflow = "hidden";
     }
@@ -2946,7 +2910,7 @@
       const co = document.getElementById("co2");
       if (co.classList.contains("hidden")) return;
       co.classList.add("hidden"); document.body.style.overflow = "";
-      if (_cartHistPushed) { _cartHistPushed = false; history.back(); }
+      if (history.state && history.state.gjModal) history.back();
     }
     function closeCOF(e) { if (e.target === document.getElementById("co2")) closeCart(); }
 
@@ -3379,7 +3343,6 @@
 
     // ── BACK BUTTON (Android) ────────────────────────────
     window.addEventListener("popstate", () => {
-      _modalHistPushed = false; _cartHistPushed = false;
       const po = document.getElementById("po");
       if (po && !po.classList.contains("hidden")) { po.classList.add("hidden"); document.body.style.overflow = ""; return; }
       const co = document.getElementById("co2");
