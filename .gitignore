@@ -1,0 +1,12 @@
+# GAS scripts — NUNCA commitar (credenciais, emails, telefones)
+*.gs
+Code.gs
+gas_automacoes.gs
+
+# Imagens de trabalho
+*.jpg
+*.jpeg
+
+# Pasta do cérebro local
+mind/
+CLAUDE.md
