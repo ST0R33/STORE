@@ -2478,11 +2478,19 @@
         const u = new URL(API); u.searchParams.set("action", "logAcesso");
         u.searchParams.set("idProduto", String(idProduto || ""));
         u.searchParams.set("tipoAcao", tipoAcao || "Clique_Detalhes");
+        u.searchParams.set("vid", _vid);
+        u.searchParams.set("sessao", _sessao);
         fetch(u.toString()).catch(() => { });
       } catch (e) { }
     }
 
     // ── TELEMETRIA COMPLETA ───────────────────────────────
+    const _vid = (() => {
+      const k = 'ob_vid';
+      let v = localStorage.getItem(k);
+      if (!v) { v = 'v_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6); localStorage.setItem(k, v); }
+      return v;
+    })();
     const _sessao = "sess_" + Math.random().toString(36).substring(2, 10);
     const _dispositivo = /Mobi/i.test(navigator.userAgent) ? "Mobile" : "Desktop";
 
@@ -2491,6 +2499,7 @@
         const u = new URL(API);
         u.searchParams.set("action", "logAcao");
         u.searchParams.set("sessao", _sessao);
+        u.searchParams.set("vid", _vid);
         u.searchParams.set("acao", acao);
         u.searchParams.set("detalhe", detalhe || "");
         u.searchParams.set("origem", "index");
@@ -2528,7 +2537,10 @@
         fretes = fr.fretes || [];
         renderProds(prods);
         updateBadge();
-        logAcao("PAGE_VIEW", document.referrer ? "referrer:" + document.referrer.split("/")[2] : "direct");
+        if (!sessionStorage.getItem('_pv')) {
+          sessionStorage.setItem('_pv', '1');
+          logAcao("PAGE_VIEW", document.referrer ? "referrer:" + document.referrer.split("/")[2] : "direct");
+        }
 
         // Categorias dinâmicas
         try {
@@ -3274,12 +3286,12 @@
       try {
         if (!cart.length) return;
         let nome = "", tel = "";
-        try { const u = JSON.parse(localStorage.getItem("ob_user") || "null"); if (u) { nome = u.nome || ""; tel = u.tel || ""; } } catch(e) {}
-        if (!nome && !tel) return;
+        try { const ou = JSON.parse(localStorage.getItem("ob_user") || "null"); if (ou) { nome = ou.nome || ""; tel = ou.tel || ""; } } catch(e) {}
         const itens = cart.map(i => `${i.nome} x${i.qty}`).join(", ");
         const total = cart.reduce((s, i) => s + pf(i) * (i.qty || 1), 0);
         const u = new URL(API);
         u.searchParams.set("action", "logCarrinho");
+        u.searchParams.set("vid", _vid);
         u.searchParams.set("nome", nome);
         u.searchParams.set("tel", tel);
         u.searchParams.set("itens", itens);
