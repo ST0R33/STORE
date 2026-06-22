@@ -4985,8 +4985,9 @@
         const updated = Object.assign({}, prod, { "Status": novoStatus });
         const res = await apiGet("salvarProduto", updated);
         if (res.ok) {
+          prod["Status"] = novoStatus;
           toast(novoStatus === "Ativo" ? "Produto ativado" : "Produto inativado");
-          allProds = []; await loadProds();
+          renderProds();
         } else toast(res.error || "Erro", "err");
       } catch (e) { toast("Erro de conexão", "err"); }
     }
@@ -8327,11 +8328,10 @@
     async function toggleCat(cat) {
       const novoStatus = (cat.Status || "Ativo") === "Ativo" ? "Inativo" : "Ativo";
       try {
-        const updated = Object.assign({}, cat, { Status: novoStatus });
-        const res = await apiGet("salvarCategoria", updated);
+        const res = await apiGet("salvarCategoria", { id: cat.ID, nome: cat.Nome, emoji: cat.Emoji, cor: cat.Cor_Hex, status: novoStatus });
         if (res.ok) {
+          cat.Status = novoStatus;
           toast(novoStatus === "Ativo" ? "Categoria ativada" : "Categoria inativada");
-          await loadCategorias();
           renderCatPage();
         } else toast(res.error || "Erro", "err");
       } catch (e) { toast("Erro de conexão", "err"); }
