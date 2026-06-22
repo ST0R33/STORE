@@ -2,7 +2,7 @@
 // Cliente: preencha as 4 linhas abaixo ANTES de publicar. Não precisa mexer em mais nada.
 
 // 1) URL do Apps Script (Implantar > Nova implantação > App da Web > copiar URL)
-const GAS_URL = "https://script.google.com/macros/s/AKfycby76gjlns6uBm33DRoljxKuWkLBdkr3zWcubRm8Oer18_dQPFipaMD8dcKMpogM8lj9/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxMxuYZNvBUiLGHR_RoCn0_ym7BQy3lJ4BOaGUHBUroxbWx4a5ZKMxqXON-BHSj4yTt/exec";
 
 // 2) URL pública do site no GitHub Pages — usada nos links de compartilhar produto
 const CFG_SITE_URL = "https://st0r33.github.io/STORE/";
