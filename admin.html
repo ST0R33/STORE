@@ -864,6 +864,46 @@
       margin-bottom: 13px
     }
 
+    #nocatAlert {
+      display: none; margin-bottom: 12px;
+      background: rgba(255,152,0,.1); border: 1px solid rgba(255,152,0,.35);
+      border-radius: 12px; padding: 11px 14px;
+      display: none; align-items: center; gap: 10px; cursor: pointer;
+      transition: background .2s;
+    }
+    #nocatAlert:hover { background: rgba(255,152,0,.18); }
+    #nocatAlert .nca-icon { font-size: 18px; flex-shrink: 0; }
+    #nocatAlert .nca-text { flex: 1; font-size: 13px; color: #ffb300; font-weight: 700; }
+    #nocatAlert .nca-sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+    #nocatAlert .nca-btn { font-size: 11px; background: rgba(255,152,0,.2); border: 1px solid rgba(255,152,0,.4); color: #ffb300; border-radius: 8px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+
+    #nocatModal {
+      display: none; position: fixed; inset: 0; z-index: 700;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    #nocatModal.open { display: flex; }
+    #nocatModal .nm-box {
+      background: var(--d2); border: 1px solid var(--border); border-radius: 20px;
+      width: 100%; max-width: 480px; max-height: 80vh; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    #nocatModal .nm-head {
+      padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #nocatModal .nm-title { font-size: 15px; font-weight: 800; color: #ffb300; }
+    #nocatModal .nm-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    #nocatModal .nm-list { overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    #nocatModal .nm-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--d3); border-radius: 10px; padding: 10px 12px;
+    }
+    #nocatModal .nm-item-info { flex: 1; min-width: 0; }
+    #nocatModal .nm-item-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #nocatModal .nm-item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    #nocatModal .nm-edit-btn { background: rgba(255,152,0,.15); border: 1px solid rgba(255,152,0,.3); color: #ffb300; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
     .sbox {
       flex: 1;
       min-width: 150px;
@@ -2984,6 +3024,14 @@
         <span id="inativeCnt"></span>
         <button class="addbtn" onclick="openModal()">+ Produto</button>
       </div>
+      <div id="nocatAlert" onclick="openNoCatModal()">
+        <span class="nca-icon">⚠️</span>
+        <div class="nca-text">
+          <span id="nocatCount"></span> produto(s) sem categoria
+          <div class="nca-sub">Não aparecem na loja — clique para ver e corrigir</div>
+        </div>
+        <button class="nca-btn">Ver produtos →</button>
+      </div>
       <div class="plist" id="plist">
         <div class="loading">
           <div class="spin"></div>Carregando...
@@ -4769,6 +4817,13 @@
         if (inativos > 0) { cntEl.textContent = inativos + " inativos"; cntEl.style.display = "inline-block"; }
         else { cntEl.style.display = "none"; }
       }
+      const semCat = allProds.filter(p => p["Status"] !== "Inativo" && !String(p["Categoria"] || "").trim());
+      const alertEl = document.getElementById("nocatAlert");
+      const cntNc = document.getElementById("nocatCount");
+      if (alertEl) {
+        if (semCat.length > 0) { alertEl.style.display = "flex"; if (cntNc) cntNc.textContent = semCat.length; }
+        else { alertEl.style.display = "none"; }
+      }
       const list = allProds.filter(p => {
         const mq = !q || (p["Nome do Produto"] || "").toLowerCase().includes(q);
         const mcat = !cat || p["Categoria"] === cat;
@@ -4977,6 +5032,22 @@
       } catch (e) { toast("Erro de conexão", "err"); }
       btn.disabled = false; btn.textContent = "💾 Salvar Produto";
     }
+
+    function openNoCatModal() {
+      const semCat = allProds.filter(p => p["Status"] !== "Inativo" && !String(p["Categoria"] || "").trim());
+      const list = document.getElementById("nocatList");
+      if (!list) return;
+      list.innerHTML = semCat.length ? semCat.map(p => `
+        <div class="nm-item">
+          <div class="nm-item-info">
+            <div class="nm-item-name">${p["Nome do Produto"] || "—"}</div>
+            <div class="nm-item-meta">Estoque: ${p["Estoque"] || 0} · ${fmt(p["Preço (R$)"])}</div>
+          </div>
+          <button class="nm-edit-btn" onclick="closeNoCatModal();editProd(allProds.find(x=>x['ID']==='${p["ID"]}'))">✏️ Editar</button>
+        </div>`).join("") : `<div class="empty">Nenhum produto sem categoria 🎉</div>`;
+      document.getElementById("nocatModal").classList.add("open");
+    }
+    function closeNoCatModal() { document.getElementById("nocatModal").classList.remove("open"); }
 
     async function toggleProd(id, novoStatus) {
       const prod = allProds.find(p => p["ID"] === id);
@@ -9762,6 +9833,17 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
   </script>
+
+  <!-- MODAL PRODUTOS SEM CATEGORIA -->
+  <div id="nocatModal" onclick="if(event.target===this)closeNoCatModal()">
+    <div class="nm-box">
+      <div class="nm-head">
+        <div class="nm-title">⚠️ Produtos sem categoria</div>
+        <button class="nm-close" onclick="closeNoCatModal()">×</button>
+      </div>
+      <div class="nm-list" id="nocatList"></div>
+    </div>
+  </div>
 </body>
 
 </html>
