@@ -1900,13 +1900,28 @@
     .price-pill:active { opacity: .7; }
     /* ══ PWA INSTALL BAR ═══════════════════════════════════════════════ */
     #pwa-bar {
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(120px);
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(calc(100% + 40px));
       z-index: 500; background: var(--d1); border: 1px solid var(--border);
-      border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;
-      width: calc(100% - 32px); max-width: 420px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.4); transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+      border-radius: 20px; padding: 20px 20px 16px;
+      width: calc(100% - 32px); max-width: 520px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.5); transition: transform .45s cubic-bezier(.34,1.56,.64,1);
     }
     #pwa-bar.show { transform: translateX(-50%) translateY(0); }
+    @media (min-width: 640px) { #pwa-bar { max-width: 680px; padding: 24px 24px 20px; } }
+    #pwa-bar-close {
+      position: absolute; top: 12px; right: 12px; z-index: 10;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      color: var(--muted); width: 32px; height: 32px; border-radius: 50%;
+      font-size: 18px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #pwa-bar-close:hover { background: rgba(255,255,255,.15); color: var(--text); }
+    .pwa-benefits { display: flex; gap: 8px; margin: 8px 0 12px; flex-wrap: wrap; }
+    .pwa-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(255,133,0,.08); border: 1px solid rgba(255,133,0,.18);
+      border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--muted);
+    }
     /* ══ FAV BUTTON ═════════════════════════════════════════════════════ */
     .fav-btn {
       position: absolute; top: 7px; left: 7px; z-index: 3;
@@ -2069,13 +2084,20 @@
 
   <!-- PWA INSTALL BAR -->
   <div id="pwa-bar">
-    <img src="icon-192.png" width="32" height="32" style="border-radius:8px;flex-shrink:0" alt="">
-    <div style="flex:1;min-width:0">
-      <div style="font-weight:800;font-size:13px;color:var(--text)">Instalar OrahBuy</div>
-      <div style="font-size:11px;color:var(--muted)">Acesse sem internet, mais rápido</div>
+    <button id="pwa-bar-close" onclick="dismissPWA()" aria-label="Fechar">×</button>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="icon-192.png" width="44" height="44" style="border-radius:12px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.4)" alt="OrahBuy">
+      <div>
+        <div style="font-weight:800;font-size:14px;color:var(--text);line-height:1.2">Instalar OrahBuy</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Adicione à sua tela inicial</div>
+      </div>
     </div>
-    <button onclick="installPWA()" style="background:var(--g);color:#fff;border:none;padding:7px 14px;border-radius:9px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap">Instalar</button>
-    <button onclick="dismissPWA()" style="background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+    <div class="pwa-benefits">
+      <span class="pwa-chip">⚡ Abre instantâneo</span>
+      <span class="pwa-chip">📶 Funciona offline</span>
+      <span class="pwa-chip">🔔 Receba novidades</span>
+    </div>
+    <button onclick="installPWA()" style="width:100%;background:linear-gradient(135deg,var(--g),var(--c));color:#fff;border:none;padding:11px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;letter-spacing:.3px">📲 Instalar agora</button>
   </div>
 
   <!-- HEADER -->
@@ -3373,7 +3395,7 @@
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       _pwaPrompt = e;
-      if (!localStorage.getItem('pwa_dismissed')) {
+      if (!localStorage.getItem('ob_pwa_dismissed')) {
         setTimeout(() => {
           const b = document.getElementById('pwa-bar');
           if (b) b.classList.add('show');
@@ -3385,9 +3407,9 @@
       else { showToast('Toque em ⋮ → "Adicionar à tela inicial"'); dismissPWA(); }
     }
     function dismissPWA() {
-      localStorage.setItem('pwa_dismissed', '1');
+      try { localStorage.setItem('ob_pwa_dismissed', '1'); } catch(e) {}
       const b = document.getElementById('pwa-bar');
-      if (b) b.classList.remove('show');
+      if (b) { b.classList.remove('show'); }
     }
 
     // ── START ────────────────────────────────────────────
