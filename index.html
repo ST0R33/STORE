@@ -1971,32 +1971,64 @@
       transform: scale(.89)
     }
 
-    /* ══ FLOAT RASTREAR ════════════════════════════════════════════ */
-    #frastrear {
+
+    /* ══ MEUS PEDIDOS — modal unificado ══════════════════════════════ */
+    #fPedidos {
       position: fixed; bottom: calc(84px + var(--sb)); right: 16px; z-index: 200;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: var(--d2); border: 2px solid rgba(255,85,0,.35);
+      width: 46px; height: 46px; border-radius: 50%;
+      background: rgba(255,85,0,.12); border: 1.5px solid rgba(255,85,0,.4);
+      backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
-      font-size: 19px; cursor: pointer;
-      box-shadow: 0 2px 12px rgba(255,85,0,.18);
+      font-size: 20px; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(255,85,0,.22);
       transition: transform .18s; color: var(--text);
     }
-    #frastrear:active { transform: scale(.88); }
-
-    /* ══ MODAL RASTREAR ════════════════════════════════════════════ */
-    #modalRastrear {
-      position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.72);
-      display: flex; align-items: center; justify-content: center; padding: 16px;
-      backdrop-filter: blur(6px);
+    #fPedidos:active { transform: scale(.88); }
+    #modalPedidos {
+      position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.7);
+      display: flex; align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(8px);
     }
-    #modalRastrear.hidden { display: none; }
-    .rbox {
-      background: var(--d2); border: 1px solid var(--border); border-radius: 20px;
-      padding: 24px; width: 100%; max-width: 370px; position: relative;
-      animation: wIn .3s ease;
+    #modalPedidos.hidden { display: none; }
+    .pdbox {
+      background: rgba(14,20,28,.92); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 22px 22px 0 0; width: 100%; max-width: 520px; position: relative;
+      animation: slideUp .32s cubic-bezier(.2,.9,.3,1);
+      max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
     }
-    .rbox-title { font-family: var(--H); font-weight: 900; font-size: 20px; color: var(--text); margin-bottom: 4px; }
-    .rbox-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.4; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .pd-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,.06);
+      flex-shrink: 0;
+    }
+    .pd-back {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text); font-size: 13px; font-weight: 700; padding: 8px 12px;
+      border-radius: 10px; cursor: pointer; min-height: 38px;
+    }
+    .pd-back:active { transform: scale(.95); }
+    .pd-htitle { font-family: var(--H); font-weight: 900; font-size: 15px; color: var(--text); }
+    .pd-x { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; width: 38px; height: 38px; }
+    .pd-tabs {
+      display: flex; gap: 6px; padding: 12px 14px 4px; overflow-x: auto; flex-shrink: 0;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .pd-tabs::-webkit-scrollbar { display: none; }
+    .pd-tab {
+      flex: 1; white-space: nowrap; min-height: 40px; padding: 9px 12px;
+      border-radius: 11px; border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03); color: var(--muted);
+      font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all .18s;
+    }
+    .pd-tab.on {
+      background: linear-gradient(135deg, rgba(255,85,0,.18), rgba(255,122,53,.14));
+      border-color: rgba(255,85,0,.4); color: var(--text);
+    }
+    .pd-body { padding: 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+    .pd-pane { display: none; animation: fadeInUp .32s ease; }
+    .pd-pane.on { display: block; }
+    #modalPedidos .fi { font-size: 16px; min-height: 48px; }
     .rbtn {
       width: 100%; padding: 13px; border-radius: 11px; border: none; cursor: pointer;
       background: linear-gradient(90deg, var(--g), var(--c)); color: #fff;
@@ -2074,17 +2106,7 @@
       height: 78px
     }
 
-    /* ── MINHAS COMPRAS MODAL ──────────────────────────────────────────── */
-    #modalMC { position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9990;display:flex;align-items:flex-end;justify-content:center }
-    #modalMC.hidden { display:none }
-    #mcBox { background:var(--dark,#04090f);border:1px solid rgba(255,85,0,.2);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom) }
-    .mc-header { display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.07) }
-    .mc-header-title { font-size:16px;font-weight:800;color:var(--text) }
-    .mc-tabs { display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.07);overflow-x:auto }
-    .mc-tab { flex-shrink:0;padding:7px 14px;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);transition:.18s }
-    .mc-tab.on { background:rgba(255,85,0,.15);color:var(--g) }
-    .mc-pane { display:none;padding:14px 14px 20px;animation:fadeInUp .28s ease }
-    .mc-pane.on { display:block }
+    /* ── PEDIDOS: cards e auth ─────────────────────────────────────────── */
     .pd-card-glass { background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px }
     .pd-title { font-weight:900;font-size:17px;color:var(--text);margin-bottom:4px }
     .pd-sub { font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.45 }
@@ -2138,7 +2160,7 @@
         <button class="tt-btn on" id="tt-dark" onclick="applyIdxTheme('cyberpunk')" title="Modo escuro">🌑</button>
         <button class="tt-btn" id="tt-light" onclick="applyIdxTheme('light')" title="Modo claro">☀️</button>
       </div>
-      <div id="userChip" onclick="openMinhasCompras()" style="display:none;align-items:center;gap:5px;background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.3);border-radius:20px;padding:5px 10px 5px 8px;cursor:pointer;max-width:130px;overflow:hidden;flex-shrink:0">
+      <div id="userChip" onclick="openPedidos('compras')" style="display:none;align-items:center;gap:5px;background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.3);border-radius:20px;padding:5px 10px 5px 8px;cursor:pointer;max-width:130px;overflow:hidden;flex-shrink:0">
         <span style="font-size:13px;flex-shrink:0">👤</span>
         <span id="userChipName" style="font-size:11px;font-weight:700;color:var(--g);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
       </div>
@@ -2421,76 +2443,81 @@
     🛒<span id="fcart-badge">0</span>
   </button>
 
-  <!-- RASTREAR PEDIDO -->
-  <button id="frastrear" onclick="openRastrear()" aria-label="Rastrear Pedido">📦</button>
+  <!-- MEUS PEDIDOS — botão flutuante -->
+  <button id="fPedidos" onclick="openPedidos()" aria-label="Meus Pedidos" title="Meus Pedidos">📦</button>
 
-  <!-- MODAL RASTREAR -->
-  <div id="modalRastrear" class="hidden">
-    <div class="rbox">
-      <button class="wclose" onclick="closeRastrear()">✕</button>
-      <div class="rbox-title">📦 Rastrear Pedido</div>
-      <p class="rbox-sub">Digite o código recebido pelo WhatsApp</p>
-      <label class="fl">Código do Pedido</label>
-      <input class="fi" id="rInput" type="text" placeholder="ORB-20260617-0001"
-        style="text-transform:uppercase;letter-spacing:.5px"
-        oninput="this.value=this.value.toUpperCase()"
-        onkeydown="if(event.key==='Enter')rastrearPedido()">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Formato: ORB-AAAAMMDD-0000 (está no recibo enviado no WhatsApp)</div>
-      <button class="rbtn" id="rBtn" onclick="rastrearPedido()">🔍 Rastrear</button>
-      <div id="rResult"></div>
-    </div>
-  </div>
-
-  <!-- MINHAS COMPRAS MODAL -->
-  <div id="modalMC" class="hidden">
-    <div id="mcBox">
-      <div class="mc-header">
-        <span class="mc-header-title">👤 Minha conta</span>
-        <button onclick="closeMinhasCompras()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px">✕</button>
-      </div>
-      <div class="mc-tabs">
-        <button class="mc-tab on" data-mctab="compras" onclick="mcTab('compras')">🛍️ Minhas Compras</button>
-        <button class="mc-tab" data-mctab="recibo" onclick="mcTab('recibo')">🧾 Recibo</button>
+  <!-- ABA UNIFICADA: MEUS PEDIDOS (Rastreio · Minhas Compras · Recibo) -->
+  <div id="modalPedidos" class="hidden">
+    <div class="pdbox">
+      <div class="pd-topbar">
+        <button class="pd-back" onclick="closePedidos()">← Voltar à Loja</button>
+        <span class="pd-htitle">Meus Pedidos</span>
+        <button class="pd-x" onclick="closePedidos()" aria-label="Fechar">✕</button>
       </div>
 
-      <!-- COMPRAS PANE -->
-      <div class="mc-pane on" id="mcp-compras">
-        <div class="pd-card-glass" id="mcLogin">
-          <div class="pd-title">🛍️ Minhas compras</div>
-          <p class="pd-sub" id="mcSub">Acesse com seu WhatsApp e senha para ver seu histórico.</p>
-          <div style="display:flex;gap:6px;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin:4px 0 14px">
-            <button type="button" id="mcTabLogin" class="mc-auth-tab" onclick="mcSwitchAuth('login')" style="flex:1;border:none;background:rgba(255,85,0,.12);color:var(--g);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Entrar</button>
-            <button type="button" id="mcTabCad" class="mc-auth-tab" onclick="mcSwitchAuth('cadastro')" style="flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Criar conta</button>
-          </div>
-          <div id="mcPaneLogin">
-            <label class="fl">Seu WhatsApp</label>
-            <input class="fi" id="mcLogTel" type="tel" placeholder="(21) 99999-9999">
-            <label class="fl" style="margin-top:10px">Senha</label>
-            <input class="fi" id="mcLogSenha" type="password" placeholder="Sua senha" onkeydown="if(event.key==='Enter')mcDoLogin()">
-            <button class="rbtn" id="mcLogBtn" onclick="mcDoLogin()">🔓 Entrar</button>
-            <button type="button" onclick="mcEsqueciSenha()" style="background:none;border:none;color:var(--g);font-size:13px;margin-top:10px;cursor:pointer;text-decoration:underline;width:100%">Esqueci minha senha</button>
-          </div>
-          <div id="mcPaneCadastro" style="display:none">
-            <label class="fl">Nome</label>
-            <input class="fi" id="mcCadNome" type="text" placeholder="Seu nome">
-            <label class="fl" style="margin-top:10px">WhatsApp</label>
-            <input class="fi" id="mcCadTel" type="tel" placeholder="(21) 99999-9999">
-            <label class="fl" style="margin-top:10px">Senha (mín. 4)</label>
-            <input class="fi" id="mcCadSenha" type="password" placeholder="Crie uma senha">
-            <label class="fl" style="margin-top:10px">Confirmar senha</label>
-            <input class="fi" id="mcCadSenha2" type="password" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')mcDoCadastro()">
-            <button class="rbtn" id="mcCadBtn" onclick="mcDoCadastro()">✨ Criar conta</button>
-          </div>
-        </div>
-        <div id="mcList" style="display:none"></div>
-        <button id="mcSairBtn" class="mc-sair" style="display:none" onclick="logoutUser()">🚪 Sair da conta</button>
+      <div class="pd-tabs">
+        <button class="pd-tab on" data-tab="rastreio" onclick="pdTab('rastreio')">📦 Rastreio</button>
+        <button class="pd-tab" data-tab="compras" onclick="pdTab('compras')">🛍️ Minhas Compras</button>
+        <button class="pd-tab" data-tab="recibo" onclick="pdTab('recibo')">🧾 Recibo</button>
       </div>
 
-      <!-- RECIBO PANE -->
-      <div class="mc-pane" id="mcp-recibo">
-        <div id="reciboArea">
-          <div class="pd-empty">🧾<br>Abra um pedido em <b>Minhas Compras</b> e toque em <b>Ver recibo</b>.</div>
-        </div>
+      <div class="pd-body">
+        <!-- TAB 1: RASTREIO -->
+        <section class="pd-pane on" id="pane-rastreio">
+          <div class="pd-card-glass">
+            <div class="pd-title">📦 Rastrear pedido</div>
+            <p class="pd-sub">Digite o código recebido pelo WhatsApp — não precisa de login.</p>
+            <label class="fl">Código do Pedido</label>
+            <input class="fi" id="rInput" type="text" placeholder="ORB-AAAAMMDD-0000"
+              style="text-transform:uppercase;letter-spacing:.5px"
+              oninput="this.value=this.value.toUpperCase()"
+              onkeydown="if(event.key==='Enter')rastrearPedido()">
+            <button class="rbtn" id="rBtn" onclick="rastrearPedido()">🔍 Rastrear</button>
+            <div id="rResult"></div>
+          </div>
+        </section>
+
+        <!-- TAB 2: MINHAS COMPRAS -->
+        <section class="pd-pane" id="pane-compras">
+          <div class="pd-card-glass" id="mcLogin">
+            <div class="pd-title">🛍️ Minhas compras</div>
+            <p class="pd-sub" id="mcSub">Acesse com seu WhatsApp e senha para ver seu histórico com segurança.</p>
+            <div style="display:flex;gap:6px;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin:4px 0 14px">
+              <button type="button" id="mcTabLogin" class="mc-auth-tab on" onclick="mcSwitchAuth('login')" style="flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Entrar</button>
+              <button type="button" id="mcTabCad" class="mc-auth-tab" onclick="mcSwitchAuth('cadastro')" style="flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Criar conta</button>
+            </div>
+            <div id="mcPaneLogin">
+              <label class="fl">Seu WhatsApp</label>
+              <input class="fi" id="mcLogTel" type="tel" placeholder="(21) 99999-9999">
+              <label class="fl" style="margin-top:10px">Senha</label>
+              <input class="fi" id="mcLogSenha" type="password" placeholder="Sua senha" onkeydown="if(event.key==='Enter')mcDoLogin()">
+              <button class="rbtn" id="mcLogBtn" onclick="mcDoLogin()">🔓 Entrar</button>
+              <button type="button" onclick="mcEsqueciSenha()" style="background:none;border:none;color:var(--g);font-size:13px;margin-top:10px;cursor:pointer;text-decoration:underline;width:100%">Esqueci minha senha</button>
+            </div>
+            <div id="mcPaneCadastro" style="display:none">
+              <label class="fl">Nome</label>
+              <input class="fi" id="mcCadNome" type="text" placeholder="Seu nome">
+              <label class="fl" style="margin-top:10px">WhatsApp</label>
+              <input class="fi" id="mcCadTel" type="tel" placeholder="(21) 99999-9999">
+              <label class="fl" style="margin-top:10px">Senha (mín. 4)</label>
+              <input class="fi" id="mcCadSenha" type="password" placeholder="Crie uma senha">
+              <label class="fl" style="margin-top:10px">Confirmar senha</label>
+              <input class="fi" id="mcCadSenha2" type="password" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')mcDoCadastro()">
+              <button class="rbtn" id="mcCadBtn" onclick="mcDoCadastro()">✨ Criar conta</button>
+            </div>
+          </div>
+          <div id="mcList" style="display:none"></div>
+          <button id="mcSairBtn" class="mc-sair" style="display:none" onclick="logoutUser()">🚪 Sair da conta</button>
+        </section>
+
+        <!-- TAB 3: RECIBO -->
+        <section class="pd-pane" id="pane-recibo">
+          <div id="reciboArea">
+            <div class="pd-empty">
+              🧾<br>Abra um pedido em <b>Minhas Compras</b> e toque em <b>Ver recibo</b>.
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -2778,7 +2805,7 @@
       // Produtos de categorias inativas nunca aparecem para o cliente
       if (allCats.length) {
         const activeCatSet = new Set(allCats.filter(c => String(c.Status || "Ativo") !== "Inativo").map(c => String(c.Nome || "").trim()));
-        l = l.filter(p => { const cat = String(p["Categoria"] || "").trim(); return !cat || activeCatSet.has(cat); });
+        l = l.filter(p => { const cat = String(p["Categoria"] || "").trim(); return cat && activeCatSet.has(cat); });
       }
       if (catA) l = l.filter(p => p["Categoria"] === catA);
       if (priceMax > 0) l = l.filter(p => pf(p) <= priceMax);
@@ -3041,20 +3068,40 @@
     }
     function closeCOF(e) { if (e.target === document.getElementById("co2")) closeCart(); }
 
-    // ── RASTREAR PEDIDO ────────────────────────────────────────────
-    function openRastrear() {
-      document.getElementById("modalRastrear").classList.remove("hidden");
+    // ── MEUS PEDIDOS ─────────────────────────────────────────────────
+    function openPedidos(tab) {
+      document.getElementById("modalPedidos").classList.remove("hidden");
       document.body.style.overflow = "hidden";
-      document.getElementById("rResult").style.display = "none";
-      document.getElementById("rInput").value = "";
-      setTimeout(() => document.getElementById("rInput").focus(), 120);
+      try { history.pushState({ modalPedidos: 1 }, ""); } catch(e) {}
+      pdTab(tab || "rastreio");
+      try {
+        const s = gjSess();
+        if (s && s.tel) { const el = document.getElementById("mcLogTel"); if (el) el.value = formatTelDisplay(s.tel); }
+      } catch(e) {}
     }
-    function closeRastrear() {
-      document.getElementById("modalRastrear").classList.add("hidden");
+    function closePedidos() {
+      document.getElementById("modalPedidos").classList.add("hidden");
       document.body.style.overflow = "";
     }
-    document.getElementById("modalRastrear").addEventListener("click", function(e) {
-      if (e.target === this) closeRastrear();
+    function pdTab(name) {
+      document.querySelectorAll(".pd-tab").forEach(t => t.classList.toggle("on", t.dataset.tab === name));
+      document.querySelectorAll(".pd-pane").forEach(p => p.classList.remove("on"));
+      const pane = document.getElementById("pane-" + name);
+      if (pane) pane.classList.add("on");
+      setTimeout(() => {
+        if (name === "rastreio") {
+          document.getElementById("rResult").style.display = "none";
+          const i = document.getElementById("rInput"); if (i && !i.value) i.focus();
+        }
+        if (name === "compras") {
+          const s = gjSess();
+          if (s && s.token && document.getElementById("mcList").style.display === "none") loadMinhasCompras();
+          else { mcShowAuth(); const i = document.getElementById("mcLogTel"); if (i && !i.value) i.focus(); }
+        }
+      }, 140);
+    }
+    document.getElementById("modalPedidos").addEventListener("click", function(e) {
+      if (e.target === this) closePedidos();
     });
 
     async function rastrearPedido() {
@@ -3555,35 +3602,11 @@
       return map[norm] || map["pendente"];
     }
 
-    function openMinhasCompras() {
-      document.getElementById("modalMC").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
-      mcTab("compras");
-      try {
-        const s = gjSess();
-        if (s && s.tel) { const el = document.getElementById("mcLogTel"); if (el && !el.value) el.value = formatTelDisplay(s.tel); }
-        if (s && s.token && document.getElementById("mcList").style.display === "none") loadMinhasCompras();
-      } catch(e) {}
-    }
-    function closeMinhasCompras() {
-      document.getElementById("modalMC").classList.add("hidden");
-      document.body.style.overflow = "";
-    }
-    document.getElementById("modalMC").addEventListener("click", function(e) { if (e.target === this) closeMinhasCompras(); });
-    function mcTab(name) {
-      document.querySelectorAll(".mc-tab").forEach(t => {
-        const on = t.dataset.mctab === name;
-        t.classList.toggle("on", on);
-        t.style.background = on ? "rgba(255,85,0,.15)" : "transparent";
-        t.style.color = on ? "var(--g)" : "var(--muted)";
-      });
-      document.querySelectorAll(".mc-pane").forEach(p => p.classList.remove("on"));
-      const pane = document.getElementById("mcp-" + name);
-      if (pane) pane.classList.add("on");
-      if (name === "compras") {
-        const s = gjSess();
-        if (s && s.token && document.getElementById("mcList").style.display === "none") loadMinhasCompras();
-      }
+    function rastrearDoHistorico(id) {
+      pdTab("rastreio");
+      const inp = document.getElementById("rInput");
+      inp.value = id;
+      rastrearPedido();
     }
     function formatTelDisplay(tel) {
       const d = String(tel).replace(/\D/g, "");
@@ -3713,6 +3736,7 @@
           </div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="mc-rec-btn" style="flex:1;margin-top:0" onclick="verRecibo('${p.id}')">🧾 Ver recibo</button>
+            <button class="mc-rec-btn" style="flex:1;margin-top:0;background:rgba(255,122,53,.08);color:#FF7A35;border-color:rgba(255,122,53,.25)" onclick="rastrearDoHistorico('${p.id}')">📦 Rastrear</button>
           </div>
         </div>`;
       }).join("");
@@ -3830,7 +3854,7 @@
       const area = document.getElementById("reciboArea");
       area.innerHTML = `<div id="rcCardCli" style="max-width:420px;margin:0 auto;background:#04090f;border:1px solid #1a2840;border-radius:16px;overflow:hidden;font-family:Inter,system-ui,sans-serif">${card}</div>
         <button class="rbtn" id="rcImgBtnCli" style="max-width:420px;margin:14px auto 0;display:block;width:100%" onclick="gerarImagemReciboCli()">📸 Baixar / Compartilhar imagem</button>`;
-      mcTab("recibo");
+      pdTab("recibo");
     }
     async function gerarImagemReciboCli() {
       if (!window.html2canvas) {
