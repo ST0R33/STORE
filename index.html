@@ -2532,7 +2532,7 @@
     document.getElementById("fwpp").href  = `${wppBase}?text=Olá!+Vim+pelo+site+OrahBuy!`;
     document.getElementById("hcta").href  = `${wppBase}?text=Olá!+Quero+conhecer+os+produtos+OrahBuy!`;
     const TTL = 5 * 60 * 1000;
-    let cfg = {}, prods = [], allProds = [], fretes = [], banners = [];
+    let cfg = {}, prods = [], allProds = [], fretes = [], banners = [], allCats = [];
     let catA = "", searchQ = "", priceMax = 0, cart = JSON.parse(localStorage.getItem("obc") || "[]");
     let cup = null, freteA = null, pagS = "PIX", prodA = null, cIdx = 0, cMedia = [];
     let banIdx = 0;
@@ -2629,9 +2629,10 @@
         // Categorias dinâmicas
         try {
           const cats = JSON.parse(localStorage.getItem("ob_cats") || "[]");
-          if (cats.length) renderDynCats(cats);
+          if (cats.length) { allCats = cats; renderDynCats(cats); }
           const rc = await apiG("getCategorias");
           if (rc.categorias && rc.categorias.length) {
+            allCats = rc.categorias;
             localStorage.setItem("ob_cats", JSON.stringify(rc.categorias));
             renderDynCats(rc.categorias);
           }
@@ -2774,6 +2775,11 @@
     }
     function applyF() {
       let l = allProds;
+      // Produtos de categorias inativas nunca aparecem para o cliente
+      if (allCats.length) {
+        const activeCatSet = new Set(allCats.filter(c => String(c.Status || "Ativo") !== "Inativo").map(c => String(c.Nome || "").trim()));
+        l = l.filter(p => { const cat = String(p["Categoria"] || "").trim(); return !cat || activeCatSet.has(cat); });
+      }
       if (catA) l = l.filter(p => p["Categoria"] === catA);
       if (priceMax > 0) l = l.filter(p => pf(p) <= priceMax);
       if (searchQ) l = l.filter(p =>
