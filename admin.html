@@ -3026,6 +3026,7 @@
           <option value="">Todos</option>
           <option>Ativo</option>
           <option>Inativo</option>
+          <option value="__sem_cat__">⚠️ Sem Categoria</option>
         </select>
         <span id="inativeCnt"></span>
         <button class="addbtn" onclick="openModal()">+ Produto</button>
@@ -4833,7 +4834,7 @@
         if (inativos > 0) { cntEl.textContent = inativos + " inativos"; cntEl.style.display = "inline-block"; }
         else { cntEl.style.display = "none"; }
       }
-      const semCat = allProds.filter(p => p["Status"] !== "Inativo" && !String(p["Categoria"] || "").trim());
+      const semCat = allProds.filter(_isOrfao);
       const alertEl = document.getElementById("nocatAlert");
       const cntNc = document.getElementById("nocatCount");
       if (alertEl) {
@@ -4842,8 +4843,10 @@
       }
       const list = allProds.filter(p => {
         const mq = !q || (p["Nome do Produto"] || "").toLowerCase().includes(q);
-        const mcat = !cat || p["Categoria"] === cat;
-        const mst = !stat || p["Status"] === stat;
+        const mcat = !cat || cat === "__sem_cat__" || p["Categoria"] === cat;
+        let mst;
+        if (stat === "__sem_cat__") mst = !String(p["Categoria"] || "").trim();
+        else mst = !stat || p["Status"] === stat;
         return mq && mcat && mst;
       });
       const el = document.getElementById("plist");
@@ -8419,14 +8422,18 @@
     }
 
     function populateCatSelects() {
-      const ativo = allCats.filter(c => c.Status !== "Inativo");
-      const opts = ativo.map(c => `<option value="${c.Nome}">${c.Emoji || ""} ${c.Nome}</option>`).join("");
+      // fcat (form): mostra TODAS as categorias (inclusive inativas) — admin precisa ver e trocar
+      const allOpts = allCats.map(c => {
+        const inativo = c.Status === "Inativo";
+        return `<option value="${c.Nome}">${c.Emoji || ""} ${c.Nome}${inativo ? " (inativa)" : ""}</option>`;
+      }).join("");
       ["fcat"].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = `<option value="">Selecione</option>` + opts;
+        if (el) el.innerHTML = `<option value="">Selecione</option>` + allOpts;
       });
+      // pcat (filtro lista): todas as categorias + "Sem Categoria"
       const pcat = document.getElementById("pcat");
-      if (pcat) pcat.innerHTML = `<option value="">Todas categorias</option>` + opts;
+      if (pcat) pcat.innerHTML = `<option value="">Todas categorias</option>` + allOpts + `<option value="__sem_cat__">⚠️ Sem Categoria</option>`;
     }
 
     function renderCatPage() {

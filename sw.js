@@ -1,4 +1,4 @@
-const CACHE = 'orahbuy-v2';
+const CACHE = 'orahbuy-v3';
 const SHELL = ['./index.html', './config.js'];
 
 self.addEventListener('install', e => {
