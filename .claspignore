@@ -1,0 +1,10 @@
+sw.js
+manifest.json
+icon-192.png
+icon-512.png
+*.jpg
+*.png
+*.md
+mind/
+README.md
+CLAUDE.md
