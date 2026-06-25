@@ -2073,6 +2073,31 @@
     .spacer {
       height: 78px
     }
+
+    /* ── MINHAS COMPRAS MODAL ──────────────────────────────────────────── */
+    #modalMC { position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9990;display:flex;align-items:flex-end;justify-content:center }
+    #modalMC.hidden { display:none }
+    #mcBox { background:var(--dark,#04090f);border:1px solid rgba(255,85,0,.2);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom) }
+    .mc-header { display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.07) }
+    .mc-header-title { font-size:16px;font-weight:800;color:var(--text) }
+    .mc-tabs { display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.07);overflow-x:auto }
+    .mc-tab { flex-shrink:0;padding:7px 14px;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);transition:.18s }
+    .mc-tab.on { background:rgba(255,85,0,.15);color:var(--g) }
+    .mc-pane { display:none;padding:14px 14px 20px;animation:fadeInUp .28s ease }
+    .mc-pane.on { display:block }
+    .pd-card-glass { background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px }
+    .pd-title { font-weight:900;font-size:17px;color:var(--text);margin-bottom:4px }
+    .pd-sub { font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.45 }
+    .pd-empty { text-align:center;padding:36px 16px;color:var(--muted);font-size:13px;line-height:1.7 }
+    .mc-card { background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px;margin-bottom:10px }
+    .mc-card-hdr { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px }
+    .mc-id { font-size:13px;color:var(--g);font-weight:700 }
+    .mc-date { font-size:11px;color:var(--muted) }
+    .mc-status { font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px }
+    .mc-total { font-size:16px;font-weight:900;color:var(--text) }
+    .mc-itens { font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4 }
+    .mc-rec-btn { margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.1));background:rgba(255,85,0,.08);color:var(--g);font-size:12px;font-weight:700;cursor:pointer }
+    .mc-sair { width:100%;padding:10px;border-radius:10px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#ef4444;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px }
   </style>
 </head>
 
@@ -2112,6 +2137,10 @@
       <div class="theme-toggle" id="themeToggle">
         <button class="tt-btn on" id="tt-dark" onclick="applyIdxTheme('cyberpunk')" title="Modo escuro">🌑</button>
         <button class="tt-btn" id="tt-light" onclick="applyIdxTheme('light')" title="Modo claro">☀️</button>
+      </div>
+      <div id="userChip" onclick="openMinhasCompras()" style="display:none;align-items:center;gap:5px;background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.3);border-radius:20px;padding:5px 10px 5px 8px;cursor:pointer;max-width:130px;overflow:hidden;flex-shrink:0">
+        <span style="font-size:13px;flex-shrink:0">👤</span>
+        <span id="userChipName" style="font-size:11px;font-weight:700;color:var(--g);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
       </div>
       <div class="hbtn" onclick="openCart()">🛒<span class="cbadge" id="cbadge">0</span></div>
     </div>
@@ -2412,6 +2441,61 @@
     </div>
   </div>
 
+  <!-- MINHAS COMPRAS MODAL -->
+  <div id="modalMC" class="hidden">
+    <div id="mcBox">
+      <div class="mc-header">
+        <span class="mc-header-title">👤 Minha conta</span>
+        <button onclick="closeMinhasCompras()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px">✕</button>
+      </div>
+      <div class="mc-tabs">
+        <button class="mc-tab on" data-mctab="compras" onclick="mcTab('compras')">🛍️ Minhas Compras</button>
+        <button class="mc-tab" data-mctab="recibo" onclick="mcTab('recibo')">🧾 Recibo</button>
+      </div>
+
+      <!-- COMPRAS PANE -->
+      <div class="mc-pane on" id="mcp-compras">
+        <div class="pd-card-glass" id="mcLogin">
+          <div class="pd-title">🛍️ Minhas compras</div>
+          <p class="pd-sub" id="mcSub">Acesse com seu WhatsApp e senha para ver seu histórico.</p>
+          <div style="display:flex;gap:6px;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin:4px 0 14px">
+            <button type="button" id="mcTabLogin" class="mc-auth-tab" onclick="mcSwitchAuth('login')" style="flex:1;border:none;background:rgba(255,85,0,.12);color:var(--g);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Entrar</button>
+            <button type="button" id="mcTabCad" class="mc-auth-tab" onclick="mcSwitchAuth('cadastro')" style="flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer">Criar conta</button>
+          </div>
+          <div id="mcPaneLogin">
+            <label class="fl">Seu WhatsApp</label>
+            <input class="fi" id="mcLogTel" type="tel" placeholder="(21) 99999-9999">
+            <label class="fl" style="margin-top:10px">Senha</label>
+            <input class="fi" id="mcLogSenha" type="password" placeholder="Sua senha" onkeydown="if(event.key==='Enter')mcDoLogin()">
+            <button class="rbtn" id="mcLogBtn" onclick="mcDoLogin()">🔓 Entrar</button>
+            <button type="button" onclick="mcEsqueciSenha()" style="background:none;border:none;color:var(--g);font-size:13px;margin-top:10px;cursor:pointer;text-decoration:underline;width:100%">Esqueci minha senha</button>
+          </div>
+          <div id="mcPaneCadastro" style="display:none">
+            <label class="fl">Nome</label>
+            <input class="fi" id="mcCadNome" type="text" placeholder="Seu nome">
+            <label class="fl" style="margin-top:10px">WhatsApp</label>
+            <input class="fi" id="mcCadTel" type="tel" placeholder="(21) 99999-9999">
+            <label class="fl" style="margin-top:10px">Senha (mín. 4)</label>
+            <input class="fi" id="mcCadSenha" type="password" placeholder="Crie uma senha">
+            <label class="fl" style="margin-top:10px">Confirmar senha</label>
+            <input class="fi" id="mcCadSenha2" type="password" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')mcDoCadastro()">
+            <button class="rbtn" id="mcCadBtn" onclick="mcDoCadastro()">✨ Criar conta</button>
+          </div>
+        </div>
+        <div id="mcList" style="display:none"></div>
+        <button id="mcSairBtn" class="mc-sair" style="display:none" onclick="logoutUser()">🚪 Sair da conta</button>
+      </div>
+
+      <!-- RECIBO PANE -->
+      <div class="mc-pane" id="mcp-recibo">
+        <div id="reciboArea">
+          <div class="pd-empty">🧾<br>Abra um pedido em <b>Minhas Compras</b> e toque em <b>Ver recibo</b>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="mcPrint"></div>
+
   <!-- WELCOME MODAL -->
   <div id="wModal" class="hidden">
     <div class="wbox">
@@ -2699,6 +2783,7 @@
         (p["Tags_Personalizadas"] || "").toLowerCase().includes(searchQ)
       );
       l = sortProds(l);
+      if (!catA && !searchQ && !sortMode) l = interleaveByCat(l);
       document.getElementById("stitle").innerHTML = `<div class="pip"></div>${l.length} produto${l.length !== 1 ? "s" : ""}`;
       renderProds(l);
     }
@@ -3425,6 +3510,354 @@
       const b = document.getElementById('pwa-bar');
       if (b) { b.classList.remove('show'); }
     }
+
+    // ── INTERLEAVE POR CATEGORIA (aba "Tudo") ────────────────────────
+    function interleaveByCat(list) {
+      const buckets = new Map();
+      list.forEach(p => {
+        const c = (p["Categoria"] || "_").trim().toLowerCase();
+        if (!buckets.has(c)) buckets.set(c, []);
+        buckets.get(c).push(p);
+      });
+      const arrs = [...buckets.values()];
+      const out = [];
+      let added = true;
+      while (added) { added = false; for (const a of arrs) { if (a.length) { out.push(a.shift()); added = true; } } }
+      const dest = out.filter(p => p["Destaque?"] === "Sim");
+      const rest = out.filter(p => p["Destaque?"] !== "Sim");
+      return [...dest, ...rest];
+    }
+
+    // ── AUTH CLIENTE (G3) ─────────────────────────────────────────
+    async function apiPost(action, body) {
+      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ action }, body || {})) });
+      return r.json();
+    }
+    function gjSess() { try { return JSON.parse(localStorage.getItem("gj_cliente_session") || "null"); } catch(e) { return null; } }
+    function gjSessSet(o) { localStorage.setItem("gj_cliente_session", JSON.stringify(o)); }
+    function gjSessClear() { localStorage.removeItem("gj_cliente_session"); }
+
+    function gjStatusMeta(raw) {
+      const norm = String(raw || "Pendente").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+      const map = {
+        "pendente":     { bg: "rgba(255,85,0,.18)",   color: "#FF7A35", icon: "⏳", step: 0 },
+        "em andamento": { bg: "rgba(59,130,246,.18)",  color: "#60A5FA", icon: "🔄", step: 1 },
+        "entregue":     { bg: "rgba(167,139,250,.18)", color: "#A78BFA", icon: "📦", step: 2 },
+        "finalizado":   { bg: "rgba(0,168,84,.25)",    color: "#00a854", icon: "✅", step: 3 },
+        "cancelado":    { bg: "rgba(239,68,68,.18)",   color: "#ef4444", icon: "❌", step: -1 },
+      };
+      return map[norm] || map["pendente"];
+    }
+
+    function openMinhasCompras() {
+      document.getElementById("modalMC").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      mcTab("compras");
+      try {
+        const s = gjSess();
+        if (s && s.tel) { const el = document.getElementById("mcLogTel"); if (el && !el.value) el.value = formatTelDisplay(s.tel); }
+        if (s && s.token && document.getElementById("mcList").style.display === "none") loadMinhasCompras();
+      } catch(e) {}
+    }
+    function closeMinhasCompras() {
+      document.getElementById("modalMC").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+    document.getElementById("modalMC").addEventListener("click", function(e) { if (e.target === this) closeMinhasCompras(); });
+    function mcTab(name) {
+      document.querySelectorAll(".mc-tab").forEach(t => {
+        const on = t.dataset.mctab === name;
+        t.classList.toggle("on", on);
+        t.style.background = on ? "rgba(255,85,0,.15)" : "transparent";
+        t.style.color = on ? "var(--g)" : "var(--muted)";
+      });
+      document.querySelectorAll(".mc-pane").forEach(p => p.classList.remove("on"));
+      const pane = document.getElementById("mcp-" + name);
+      if (pane) pane.classList.add("on");
+      if (name === "compras") {
+        const s = gjSess();
+        if (s && s.token && document.getElementById("mcList").style.display === "none") loadMinhasCompras();
+      }
+    }
+    function formatTelDisplay(tel) {
+      const d = String(tel).replace(/\D/g, "");
+      const m = d.match(/^(\d{2})(\d{5})(\d{4})$/);
+      return m ? `(${m[1]}) ${m[2]}-${m[3]}` : tel;
+    }
+    function updateUserChip() {
+      try {
+        const u = JSON.parse(localStorage.getItem("gj_user") || "null");
+        const chip = document.getElementById("userChip");
+        if (!chip) return;
+        if (u && u.nome) { document.getElementById("userChipName").textContent = u.nome; chip.style.display = "flex"; }
+        else chip.style.display = "none";
+      } catch(e) {}
+    }
+    function logoutUser() {
+      localStorage.removeItem("gj_user"); gjSessClear(); updateUserChip();
+      document.getElementById("mcLogin").style.display = "block";
+      document.getElementById("mcList").style.display = "none";
+      document.getElementById("mcSairBtn").style.display = "none";
+      const lt = document.getElementById("mcLogTel"); if (lt) lt.value = "";
+      const ls = document.getElementById("mcLogSenha"); if (ls) ls.value = "";
+      document.getElementById("mcSub").textContent = "Acesse com seu WhatsApp e senha para ver seu histórico.";
+      mcSwitchAuth("login"); showToast("Saiu da conta 👋");
+    }
+    function mcSwitchAuth(mode) {
+      const isLogin = mode !== "cadastro";
+      document.getElementById("mcPaneLogin").style.display = isLogin ? "block" : "none";
+      document.getElementById("mcPaneCadastro").style.display = isLogin ? "none" : "block";
+      document.getElementById("mcTabLogin").style.background = isLogin ? "rgba(255,85,0,.12)" : "transparent";
+      document.getElementById("mcTabLogin").style.color = isLogin ? "var(--g)" : "var(--muted)";
+      document.getElementById("mcTabCad").style.background = !isLogin ? "rgba(255,85,0,.12)" : "transparent";
+      document.getElementById("mcTabCad").style.color = !isLogin ? "var(--g)" : "var(--muted)";
+    }
+    async function mcDoLogin() {
+      const tel = document.getElementById("mcLogTel").value.replace(/\D/g, "");
+      const senha = document.getElementById("mcLogSenha").value;
+      if (tel.length < 10) { showToast("Informe um WhatsApp com DDD"); return; }
+      if (!senha) { showToast("Informe a senha"); return; }
+      const btn = document.getElementById("mcLogBtn");
+      btn.disabled = true; btn.textContent = "Entrando...";
+      try {
+        const d = await apiPost("loginCliente", { telefone: tel, senha });
+        if (!d.ok) { showToast(d.erro || "Não foi possível entrar"); if (d.naoCadastrado) mcSwitchAuth("cadastro"); return; }
+        mcOnAuth(d, tel);
+      } catch(e) { showToast("Erro de conexão"); }
+      finally { btn.disabled = false; btn.textContent = "🔓 Entrar"; }
+    }
+    async function mcDoCadastro() {
+      const nome = document.getElementById("mcCadNome").value.trim();
+      const tel = document.getElementById("mcCadTel").value.replace(/\D/g, "");
+      const senha = document.getElementById("mcCadSenha").value;
+      const senha2 = document.getElementById("mcCadSenha2").value;
+      if (!nome) { showToast("Informe seu nome"); return; }
+      if (tel.length < 10) { showToast("WhatsApp inválido (com DDD)"); return; }
+      if (senha.length < 4) { showToast("Senha mínima de 4 caracteres"); return; }
+      if (senha !== senha2) { showToast("As senhas não conferem"); return; }
+      const btn = document.getElementById("mcCadBtn");
+      btn.disabled = true; btn.textContent = "Verificando...";
+      try {
+        const v = await apiPost("verificarCliente", { telefone: tel });
+        if (v && v.ok && v.temSenha) { showToast("Você já tem cadastro. Faça login."); mcSwitchAuth("login"); return; }
+        btn.textContent = "Criando...";
+        const d = await apiPost("cadastrarCliente", { nome, telefone: tel, senha });
+        if (!d.ok) { showToast(d.erro || "Não foi possível cadastrar"); if (d.jaCadastrado) mcSwitchAuth("login"); return; }
+        mcOnAuth(d, tel);
+      } catch(e) { showToast("Erro de conexão"); }
+      finally { btn.disabled = false; btn.textContent = "✨ Criar conta"; }
+    }
+    function mcEsqueciSenha() {
+      const wpp = WPP0;
+      const msg = encodeURIComponent("Olá! Esqueci minha senha do site OrahBuy e gostaria de redefinir.");
+      window.open(`https://wa.me/${wpp}?text=${msg}`, "_blank");
+    }
+    function mcOnAuth(d, tel) {
+      gjSessSet({ token: d.token, nome: d.nome || "", tel });
+      try { localStorage.setItem("gj_user", JSON.stringify({ nome: d.nome || "", tel, ts: Date.now() })); } catch(e) {}
+      updateUserChip(); loadMinhasCompras();
+    }
+    async function loadMinhasCompras() {
+      const s = gjSess();
+      if (!s || !s.token) { mcShowAuth(); return; }
+      document.getElementById("mcSub").textContent = "Carregando seus pedidos...";
+      try {
+        const d = await apiPost("getMinhasCompras", { token: s.token });
+        if (!d.ok) {
+          if (d.authRequired) { gjSessClear(); updateUserChip(); showToast("Sessão expirada, entre de novo"); mcShowAuth(); return; }
+          showToast(d.erro || "Erro ao buscar pedidos"); return;
+        }
+        renderMCList(d.pedidos || [], s.tel);
+      } catch(e) { showToast("Erro de conexão"); }
+    }
+    function mcShowAuth() {
+      document.getElementById("mcLogin").style.display = "block";
+      document.getElementById("mcList").style.display = "none";
+      document.getElementById("mcSairBtn").style.display = "none";
+      const s = gjSess();
+      if (s && s.tel) { const el = document.getElementById("mcLogTel"); if (el) el.value = formatTelDisplay(s.tel); }
+    }
+    let _mcPedidos = {};
+    function renderMCList(pedidos, tel) {
+      document.getElementById("mcLogin").style.display = "none";
+      const list = document.getElementById("mcList");
+      list.style.display = "block";
+      document.getElementById("mcSairBtn").style.display = "block";
+      if (!pedidos.length) {
+        list.innerHTML = `<div class="pd-empty">📭 Nenhum pedido encontrado para este número.<br><a href="https://wa.me/${WPP0}" target="_blank" style="color:var(--g);font-weight:700">Falar no WhatsApp</a></div>`;
+        document.getElementById("mcSub").textContent = "WhatsApp: " + formatTelDisplay(tel);
+        return;
+      }
+      document.getElementById("mcSub").textContent = pedidos.length + " pedido(s) encontrado(s)";
+      _mcPedidos = {};
+      list.innerHTML = pedidos.map(p => {
+        _mcPedidos[p.id] = p;
+        const s = gjStatusMeta(p.status);
+        let itensStr = "";
+        try { itensStr = JSON.parse(p.itens).map(i => `${i.nome} x${i.qtd}`).join(", "); } catch(e) { itensStr = ""; }
+        return `<div class="mc-card">
+          <div class="mc-card-hdr">
+            <div><div class="mc-id">#${p.id}</div><div class="mc-date">${p.data || ""}</div></div>
+            <span class="mc-status" style="background:${s.bg};color:${s.color}">${p.status}</span>
+          </div>
+          ${itensStr ? `<div class="mc-itens">${itensStr}</div>` : ""}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <span class="mc-total">${fmt(p.total)}</span>
+            <span style="font-size:11px;color:var(--muted)">${p.formaPagamento || ""}</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="mc-rec-btn" style="flex:1;margin-top:0" onclick="verRecibo('${p.id}')">🧾 Ver recibo</button>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    // Recibo do cliente com itens, parcelas e saldo
+    const _RC_STORE = "ORAHBUY";
+    function _rcProdImg(nome) {
+      if (!allProds.length || !nome) return "";
+      const n = String(nome).toLowerCase().trim();
+      const f = allProds.find(p => String(p["Nome do Produto"] || "").toLowerCase().trim() === n)
+        || allProds.find(p => { const pn = String(p["Nome do Produto"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
+      return f ? String(f["Imagem 1 (URL)"] || "").trim() : "";
+    }
+    function _rcDate(v) {
+      if (!v) return "—";
+      const s = String(v);
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) { try { return new Date(s).toLocaleDateString("pt-BR"); } catch(e) { return s; } }
+      return s;
+    }
+    function _rcCalcSaldo(baixas, totalPed) {
+      const bxs = baixas || [];
+      const pagas = bxs.filter(b => { const st = String(b.Status_Pagamento || ""); return st !== "Pendente" && st !== "Liquidado"; });
+      const pendentes = bxs.filter(b => String(b.Status_Pagamento || "") === "Pendente");
+      const totalPago = pagas.reduce((s, b) => s + Number(b.Valor_Final_Recebido || 0), 0);
+      const saldo = Math.max(0, totalPed - totalPago);
+      const pct = totalPed > 0 ? Math.min(100, Math.round(totalPago / totalPed * 100)) : 0;
+      return { pagas, pendentes, totalPago, saldo, pct, quitado: saldo <= 0.01 };
+    }
+    function verRecibo(id) {
+      const p = _mcPedidos[id];
+      if (!p) return;
+      const nome = p.nome || "—", pag = p.formaPagamento || "—", dtPed = p.data || "—";
+      const total = Number(p.total || 0), sub = Number(p.subtotal || total), desc = Number(p.desconto || 0);
+      const obs = String(p.obs || ""), endereco = String(p.endereco || "").trim(), cep = String(p.cep || "").trim();
+      const enderecoFmt = [endereco, cep ? `CEP ${cep}` : ""].filter(Boolean).join(" — ");
+      const qtdParc = Number(p.qtdParcelas || 0);
+      let itensHtml = "";
+      try {
+        const arr = JSON.parse(p.itens);
+        if (Array.isArray(arr) && arr.length) {
+          itensHtml = arr.map(i => {
+            const n = (i.nome || i.name || "?") + (i.variacao ? ` (${i.variacao})` : "");
+            const q = Number(i.qtd || i.qty || 1), v = Number(i.valor || i.preco || 0), tot = v * q;
+            const img = _rcProdImg(i.nome || i.name);
+            const thumb = img ? `<img src="${img}?_nc=1" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : "";
+            const fb = `<div style="display:${img ? "none" : "flex"};align-items:center;justify-content:center;height:100%;font-size:20px;color:#8899aa">📦</div>`;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+              <div style="width:54px;height:54px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow:hidden">${thumb}${fb}</div>
+              <div style="flex:1;min-width:0"><div style="font-size:12px;color:#e2f4ff;font-weight:700;line-height:1.35">${n}</div>${v > 0 ? `<div style="font-size:10px;color:#8899aa;margin-top:3px">${fmt(v)} × ${q} un.</div>` : ""}</div>
+              <div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:900;color:#FF5500">${tot > 0 ? fmt(tot) : "—"}</div>${q > 1 ? `<div style="font-size:9px;color:#8899aa">unit. ${fmt(v)}</div>` : ""}</div>
+            </div>`;
+          }).join("");
+        }
+      } catch(e) {}
+      const { pagas, pendentes, totalPago, saldo, pct, quitado } = _rcCalcSaldo(p.baixas, total);
+      const nPagas = pagas.length, nPend = pendentes.length, totalParc = qtdParc || (nPagas + nPend) || 0;
+      const mkBxRow = (b, isPend, num) => {
+        const vl = Number(isPend ? (b.Saldo_Restante || b.Valor_Original || 0) : (b.Valor_Final_Recebido || 0));
+        const st = b.Status_Pagamento || "", dt = _rcDate(isPend ? b.Proxima_Vencimento : b.Data_Baixa_Efetiva);
+        const taxa = Number(b.Taxa_Aplicada_RS || 0), isAtras = st.includes("Atraso");
+        const cor = isPend ? "#f44336" : (isAtras ? "#ffb74d" : st.includes("Antecip") ? "#ab47bc" : "#FF5500");
+        const icon = isPend ? "⏳" : isAtras ? "⚠️" : st.includes("Antecip") ? "⚡" : "✅";
+        const stLabel = isPend ? "A pagar" : st.replace("Atrasado ", "").replace("SEM Taxa", "s/ juros").replace("COM Taxa", "c/ juros");
+        const parcLabel = totalParc > 1 ? `Parc. ${num}/${totalParc}` : (isPend ? "A pagar" : "Pagamento");
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="min-width:28px;height:22px;border-radius:6px;background:${cor}22;border:1.5px solid ${cor}55;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${cor};flex-shrink:0;padding:0 3px">${totalParc > 1 ? `${num}/${totalParc}` : num}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:${cor}">${icon} ${isPend ? "Vence " : "Pago "}${dt}</div><div style="font-size:10px;color:#8899aa;margin-top:1px">${parcLabel} · ${stLabel}${taxa > 0 ? ` · Juros: ${fmt(taxa)}` : ""}</div></div>
+          <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:800;color:${cor}">${fmt(vl)}</div><div style="font-size:9px;color:#8899aa">${isPend ? "a pagar" : "recebido"}</div></div>
+        </div>`;
+      };
+      const bxHtml = [...pagas.map((b, i) => mkBxRow(b, false, i + 1)), ...pendentes.map((b, i) => mkBxRow(b, true, nPagas + i + 1))].join("");
+      const temHist = (nPagas + nPend) > 0;
+      const card = `
+        <div class="rc-header" style="background:linear-gradient(135deg,#0a1628,#04090f);padding:16px;text-align:center;border-bottom:1px solid #1a2840">
+          <div style="font-weight:900;font-size:22px;color:#FF5500">🏪 ${_RC_STORE}</div>
+          <div style="font-size:10px;color:#8899aa;letter-spacing:1px;margin-top:2px">RECIBO DE VENDA  •  #${p.id}</div>
+        </div>
+        <div style="padding:12px 16px;border-bottom:1px solid #1a2840">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div><div style="font-size:13px;font-weight:800;color:#e2f4ff;line-height:1.2">👤 ${nome}</div>${enderecoFmt ? `<div style="font-size:10px;color:#8899aa;margin-top:2px">📍 ${enderecoFmt}</div>` : ""}</div>
+            <div style="text-align:right;flex-shrink:0"><div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(255,85,0,.15);color:#FF7A35;border:1px solid rgba(255,85,0,.3)">${pag}</div><div style="font-size:10px;color:#8899aa;margin-top:3px">📅 ${dtPed}</div></div>
+          </div>
+          ${obs ? `<div style="font-size:10px;color:#8899aa;margin-top:6px;padding:5px 8px;background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid rgba(255,85,0,.3)">📝 ${obs}</div>` : ""}
+        </div>
+        ${itensHtml ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840"><div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🛒 ITENS DO PEDIDO</div>${itensHtml}</div>` : ""}
+        <div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:rgba(6,12,24,.6)">
+          <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💰 VALORES</div>
+          ${sub !== total && desc > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#8899aa"><span>Subtotal</span><span>${fmt(sub)}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#FF7A35"><span>🏷️ Desconto</span><span>— ${fmt(desc)}</span></div>` : ""}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:${sub !== total && desc > 0 ? "6" : "0"}px;padding-top:${sub !== total && desc > 0 ? "6" : "0"}px;${sub !== total && desc > 0 ? "border-top:1px solid rgba(255,255,255,.08);" : ""}">
+            <span style="font-size:12px;color:#8899aa;font-weight:700">TOTAL DO PEDIDO</span>
+            <span style="font-size:20px;font-weight:900;color:#e2f4ff">${fmt(total)}</span>
+          </div>
+        </div>
+        ${temHist ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px">💳 HISTÓRICO DE PAGAMENTOS</span>
+            <span style="font-size:11px;font-weight:800;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:8px;color:${quitado ? "#FF5500" : "#ffb74d"}">${pct}%</span>
+          </div>
+          <div style="height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:10px">
+            <div style="width:${pct}%;height:100%;background:${quitado ? "linear-gradient(90deg,#FF5500,#FF7A35)" : "linear-gradient(90deg,#FF7A35,#ffb74d)"};border-radius:3px"></div>
+          </div>
+          ${bxHtml}
+        </div>
+        <div style="padding:14px 16px;background:${quitado ? "rgba(255,85,0,.08)" : "rgba(244,67,54,.08)"};border-bottom:1px solid ${quitado ? "rgba(255,85,0,.2)" : "rgba(244,67,54,.2)"}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:10px;color:#8899aa;margin-bottom:3px">✅ Total pago</div><div style="font-size:18px;font-weight:900;color:#FF5500">${fmt(totalPago)}</div></div>
+            <div style="text-align:right">${quitado ? `<div style="font-size:22px;font-weight:900;color:#FF5500">✅ QUITADO</div>` : `<div><div style="font-size:10px;color:#8899aa;margin-bottom:3px">⚠️ Saldo devedor</div><div style="font-size:22px;font-weight:900;color:#f44336">${fmt(saldo)}</div></div>`}</div>
+          </div>
+        </div>` : ""}
+        <div style="padding:12px 16px;text-align:center;background:rgba(0,0,0,.2)">
+          <div style="font-size:9px;color:#8899aa;letter-spacing:.5px;text-transform:uppercase">${_RC_STORE} · Obrigado pela preferência 🙏</div>
+          <div style="font-size:8px;color:rgba(136,153,170,.5);margin-top:3px">${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+        </div>`;
+      const area = document.getElementById("reciboArea");
+      area.innerHTML = `<div id="rcCardCli" style="max-width:420px;margin:0 auto;background:#04090f;border:1px solid #1a2840;border-radius:16px;overflow:hidden;font-family:Inter,system-ui,sans-serif">${card}</div>
+        <button class="rbtn" id="rcImgBtnCli" style="max-width:420px;margin:14px auto 0;display:block;width:100%" onclick="gerarImagemReciboCli()">📸 Baixar / Compartilhar imagem</button>`;
+      mcTab("recibo");
+    }
+    async function gerarImagemReciboCli() {
+      if (!window.html2canvas) {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        document.head.appendChild(s);
+        await new Promise((res, rej) => { s.onload = res; s.onerror = rej; });
+      }
+      const btn = document.getElementById("rcImgBtnCli");
+      if (btn) { btn.textContent = "⏳ Gerando..."; btn.disabled = true; }
+      try {
+        const canvas = await html2canvas(document.getElementById("rcCardCli"), { backgroundColor: "#04090f", scale: 2, useCORS: true });
+        canvas.toBlob(blob => {
+          const file = new File([blob], "recibo-orahbuy.png", { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: "Recibo OrahBuy" }).catch(() => {});
+          } else {
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recibo-orahbuy.png"; a.click();
+          }
+        });
+      } catch(e) { showToast("Erro ao gerar imagem"); }
+      if (btn) { btn.textContent = "📸 Baixar / Compartilhar imagem"; btn.disabled = false; }
+    }
+
+    // iOS PWA tip
+    const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const _isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    if (_isIOS && !_isStandalone && !localStorage.getItem("ob_pwa_dismissed")) {
+      setTimeout(() => { const b = document.getElementById("pwa-bar"); if (b) b.classList.add("show"); }, 5000);
+    }
+
+    // Atualizar chip ao carregar
+    updateUserChip();
 
     // ── START ────────────────────────────────────────────
     init();
