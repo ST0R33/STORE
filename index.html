@@ -2816,10 +2816,14 @@
     }
     function applyF() {
       let l = allProds;
-      // Produtos de categorias inativas nunca aparecem para o cliente
+      // Produto inativo nunca aparece
+      l = l.filter(p => String(p["Status"] || "Ativo") !== "Inativo");
+      // Produto sem categoria ou com categoria inativa nunca aparece
       if (allCats.length) {
         const activeCatSet = new Set(allCats.filter(c => String(c.Status || "Ativo") !== "Inativo").map(c => String(c.Nome || "").trim()));
         l = l.filter(p => { const cat = String(p["Categoria"] || "").trim(); return cat && activeCatSet.has(cat); });
+      } else {
+        l = l.filter(p => String(p["Categoria"] || "").trim() !== "");
       }
       if (catA) l = l.filter(p => p["Categoria"] === catA);
       if (priceMax > 0) l = l.filter(p => pf(p) <= priceMax);
