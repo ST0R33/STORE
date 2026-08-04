@@ -512,6 +512,13 @@
     }
 
     /* DASHBOARD */
+    .hp-filter {
+      background: var(--d2); border: 1px solid var(--border); color: var(--muted);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .15s; font-family: var(--H);
+    }
+    .hp-filter.on { background: rgba(255,85,0,.15); border-color: var(--g); color: var(--g); }
+    .hp-filter:active { transform: scale(.94); }
     .sgrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2168,6 +2175,18 @@
     #mktHtmlCard.layout-5 .mkt-deco-glow { top:55%;bottom:0;height:auto;background:rgba(6,14,26,.55);border-radius:0 }
     #mktHtmlCard.layout-5 .mkt-grid-bg { top:55% }
 
+    /* Layout 6 — Círculo (premium/elegante): imagem redonda centralizada, texto abaixo */
+    #mktHtmlCard.layout-6 .mkt-img-box { top:8%;left:50%;right:auto;width:150px;height:150px;transform:translateX(-50%);border-radius:50%;box-shadow:0 0 0 3px rgba(255,85,0,.4),0 0 44px rgba(255,85,0,.22),0 4px 24px rgba(0,0,0,.5) }
+    #mktHtmlCard.layout-6 .mkt-img-overlay { border-radius:50% }
+    #mktHtmlCard.layout-6 .mkt-badge { left:50%;right:auto;transform:translateX(-50%);top:6px }
+    #mktHtmlCard.layout-6 .mkt-deco-glow { top:2%;height:42%;background:radial-gradient(circle at 50% 35%,rgba(255,85,0,.20) 0%,transparent 65%) }
+
+    /* Layout 7 — Diagonal Neon (chamativo/flash): imagem full-bleed, faixa diagonal, texto colado embaixo */
+    #mktHtmlCard.layout-7 .mkt-img-box { top:0;left:0;right:0;bottom:0;width:auto;height:auto;border-radius:0 }
+    #mktHtmlCard.layout-7 .mkt-img-overlay { border-radius:0;background:linear-gradient(180deg,rgba(4,9,15,.1) 0%,rgba(4,9,15,.35) 45%,rgba(4,9,15,.94) 100%) }
+    #mktHtmlCard.layout-7 .mkt-badge { top:18px;right:-38px;left:auto;transform:rotate(45deg);width:150px;text-align:center;background:linear-gradient(90deg,#ff3d71,#ff2e8f);border:none;color:#fff;padding:6px 0;font-size:11px;letter-spacing:2px;text-shadow:none }
+    #mktHtmlCard.layout-7 .mkt-deco-glow, #mktHtmlCard.layout-7 .mkt-deco-topline { display:none }
+
     /* KANBAN INFO BTN */
     .kb-info {
       background: rgba(255, 85, 0, .14);
@@ -2843,6 +2862,10 @@
 
     /* Kanban age badge */
     .kage { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-left: auto; }
+    .urg-badge { display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;border:1px solid transparent }
+    .urg-late  { background:rgba(244,67,54,.15);color:#f44336;border-color:rgba(244,67,54,.35) }
+    .urg-warn  { background:rgba(255,85,0,.15);color:var(--g);border-color:rgba(255,85,0,.35) }
+    .urg-soon  { background:rgba(255,214,0,.12);color:#f9a825;border-color:rgba(255,214,0,.3) }
     .kage-ok { background: rgba(0,230,118,.12); color: var(--g); }
     .kage-warn { background: rgba(255,109,0,.15); color: var(--o); }
     .kage-late { background: rgba(244,67,54,.15); color: var(--r); }
@@ -2949,6 +2972,13 @@
     <div class="page on" id="page-home">
       <!-- Saudação -->
       <div id="homeGreeting"></div>
+      <!-- Filtro de período -->
+      <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="hp-filter on" data-p="30" onclick="loadHome('30')">30d</button>
+        <button class="hp-filter" data-p="hoje" onclick="loadHome('hoje')">Hoje</button>
+        <button class="hp-filter" data-p="7" onclick="loadHome('7')">7d</button>
+        <button class="hp-filter" data-p="90" onclick="loadHome('90')">90d</button>
+      </div>
       <!-- Stats -->
       <div class="sgrid">
         <div class="scard sc-g clickable" onclick="window.location.href='gestao_unificada.html'"><div class="sico">📦</div><div class="sval" id="s1">—</div><div class="slbl">Pedidos Hoje</div></div>
@@ -2958,10 +2988,12 @@
       </div>
       <!-- KPIs extras -->
       <div class="sgrid-ext">
-        <div class="scard-sm"><div class="sv" id="s5" style="color:var(--c)">—</div><div class="sl">🎯 Ticket Médio/mês</div></div>
-        <div class="scard-sm"><div class="sv" id="s6" style="color:var(--g)">—</div><div class="sl">📈 Conversão do mês</div></div>
-        <div class="scard-sm"><div class="sv" id="s7" style="color:var(--o)">—</div><div class="sl">📦 Pedidos do mês</div></div>
-        <div class="scard-sm"><div class="sv" id="s8" style="color:var(--g)">—</div><div class="sl">✅ Finalizados/mês</div></div>
+        <div class="scard-sm"><div class="sv" id="s5" style="color:var(--c)">—</div><div class="sl" id="sl5">🎯 Ticket Médio</div></div>
+        <div class="scard-sm"><div class="sv" id="s6" style="color:var(--g)">—</div><div class="sl" id="sl6">📈 Conversão</div></div>
+        <div class="scard-sm"><div class="sv" id="s7" style="color:var(--o)">—</div><div class="sl" id="sl7">📦 Pedidos</div></div>
+        <div class="scard-sm"><div class="sv" id="s8" style="color:var(--g)">—</div><div class="sl" id="sl8">✅ Finalizados</div></div>
+        <div class="scard-sm"><div class="sv" id="s9" style="color:#00bcd4">—</div><div class="sl" id="sl9">💚 Lucro</div></div>
+        <div class="scard-sm"><div class="sv" id="s10" style="color:#7c4dff">—</div><div class="sl" id="sl10">📊 Margem</div></div>
       </div>
       <!-- Meta Mensal -->
       <div class="meta-bar-wrap" id="metaBarWrap">
@@ -3279,6 +3311,8 @@
             <button class="mkt-lp-btn" id="mktLP3" onclick="mktSetLayout(3)"><span class="mkt-lp-icon">💲</span><span>Preço</span></button>
             <button class="mkt-lp-btn" id="mktLP4" onclick="mktSetLayout(4)"><span class="mkt-lp-icon">✦</span><span>Texto</span></button>
             <button class="mkt-lp-btn" id="mktLP5" onclick="mktSetLayout(5)"><span class="mkt-lp-icon">📰</span><span>Magazine</span></button>
+            <button class="mkt-lp-btn" id="mktLP6" onclick="mktSetLayout(6)"><span class="mkt-lp-icon">⭕</span><span>Círculo</span></button>
+            <button class="mkt-lp-btn" id="mktLP7" onclick="mktSetLayout(7)"><span class="mkt-lp-icon">⚡</span><span>Neon</span></button>
           </div>
         </div>
         <!-- Painel de Controles -->
@@ -4410,6 +4444,26 @@
     }
 
     function fmt(v) { const n = Number(v); return "R$ " + (isNaN(n) ? "0,00" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2 })); }
+    // W1: frases variadas de agradecimento — evita recibo sempre igual. quitado=true usa tom de celebração
+    function _fraseAgradecimento(quitado) {
+      const quit = ["🎉 *Pedido quitado!* Muito obrigado pela confiança, conte sempre com a gente 🧡",
+        "🎉 Tudo pago! Foi um prazer atender você — volte sempre 🛒",
+        "✅ Quitado com sucesso! Obrigado por fechar negócio com a OrahBuy 🙏",
+        "🎉 Fechamos com chave de ouro! Obrigado pela preferência 🧡"];
+      const parcial = ["Obrigado pela preferência 🙏 Qualquer dúvida sobre o saldo, é só chamar!",
+        "Valeu pela confiança! Seguimos à disposição até a última parcela 🧡",
+        "Obrigado por manter tudo em dia — conte sempre com a gente 🙏",
+        "Sua confiança é muito importante pra gente. Obrigado! 🧡"];
+      const arr = quitado ? quit : parcial;
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+    // BUG-RECIBO-DATA-CRUA: GAS devolve Date como ISO (2026-07-31T07:00:00.000Z) — sem isso, recibo mostra a string crua
+    function _rcDate(v) {
+      if (!v) return "—";
+      const s = String(v);
+      if (/^\d{4}-\d{2}-\d{2}T/.test(s)) { try { return new Date(s).toLocaleDateString("pt-BR"); } catch(e) { return s; } }
+      return s;
+    }
     function fmtDate(s) { try { return String(s).split(" ")[0]; } catch (e) { return s; } }
     function fmtDT(s, dateOnly) {
       if (!s) return "—";
@@ -4638,52 +4692,65 @@
     }
 
     // HOME
-    async function loadHome() {
+    let homeFilter = "30";
+    async function loadHome(periodo) {
+      if (periodo) {
+        homeFilter = periodo;
+        document.querySelectorAll(".hp-filter").forEach(b => b.classList.toggle("on", b.dataset.p === periodo));
+      }
       renderGreeting();
       updateOnlineStatus();
       try {
-        const [pr, pp, cf, kpis] = await Promise.all([
+        const [pr, pp, rp] = await Promise.all([
           apiGet("getProdutos"),
           apiGet("getPedidos"),
-          apiGet("getPrevisaoCaixa"),
-          apiGet("getKPIs").catch(() => null)
+          apiGet("getResumoPeriodo", { periodo: homeFilter }).catch(() => null)
         ]);
         const prods = (pr && Array.isArray(pr.produtos)) ? pr.produtos : [];
         const peds  = (pp && Array.isArray(pp.pedidos))  ? pp.pedidos  : [];
         allProds = prods; allPeds = peds;
 
-        const hoje = new Date().toLocaleDateString("pt-BR");
-        const hojeP = peds.filter(p => String(p["Data/Hora"] || "").startsWith(hoje));
-        const fat = hojeP.reduce((s, p) => s + Number(p["Total (R$)"] || 0), 0);
         const pend = peds.filter(p => p["Status"] === "Pendente");
         const low = prods.filter(p => p["Estoque"] !== null && p["Estoque"] !== undefined && Number(p["Estoque"]) <= 3);
 
-        document.getElementById("s1").textContent = hojeP.length;
-        document.getElementById("s2").textContent = fat > 0 ? fmt(fat) : "R$ 0";
-        document.getElementById("s3").textContent = pend.length;
-        document.getElementById("s4").textContent = low.length;
+        if (rp && !rp.error) {
+          document.getElementById("s1").textContent = rp.pedidosHoje ?? "—";
+          document.getElementById("s2").textContent = (rp.faturamentoHoje || 0) > 0 ? fmt(rp.faturamentoHoje) : "R$ 0";
+          document.getElementById("s3").textContent = rp.pendentesTotal ?? "—";
+          document.getElementById("s4").textContent = rp.estoqueBaixo ?? "—";
 
-        // KPIs extras
-        if (kpis && !kpis.error) {
-          const s5 = document.getElementById("s5"); if (s5) s5.textContent = kpis.ticketMedio ? fmt(kpis.ticketMedio) : "—";
-          const s6 = document.getElementById("s6"); if (s6) s6.textContent = kpis.taxaConversao != null ? kpis.taxaConversao.toFixed(1) + "%" : "—";
-          const s7 = document.getElementById("s7"); if (s7) s7.textContent = kpis.pedidosMes ?? "—";
-          const s8 = document.getElementById("s8"); if (s8) s8.textContent = kpis.pedidosFinalizados ?? "—";
-          // Meta bar
-          const pct = Math.min(100, Number(kpis.progresso || 0));
+          const lbl = homeFilter === "hoje" ? "hoje" : homeFilter === "7" ? "7d" : homeFilter === "90" ? "90d" : "30d";
+          const s5 = document.getElementById("s5"); if (s5) s5.textContent = (rp.ticketMedio || 0) > 0 ? fmt(rp.ticketMedio) : "—";
+          const s6 = document.getElementById("s6"); if (s6) s6.textContent = rp.taxaConversao != null ? rp.taxaConversao + "%" : "—";
+          const s7 = document.getElementById("s7"); if (s7) s7.textContent = rp.pedidosPeriodo ?? "—";
+          const s8 = document.getElementById("s8"); if (s8) s8.textContent = rp.pedidosFinalizados ?? "—";
+          const s9 = document.getElementById("s9"); if (s9) s9.textContent = rp.lucroPeriodo != null ? fmt(rp.lucroPeriodo) : "—";
+          const s10 = document.getElementById("s10"); if (s10) s10.textContent = rp.margemPct != null ? rp.margemPct + "%" : "—";
+          const el5 = document.getElementById("sl5"); if (el5) el5.textContent = "🎯 TM " + lbl;
+          const el6 = document.getElementById("sl6"); if (el6) el6.textContent = "📈 Conv " + lbl;
+          const el7 = document.getElementById("sl7"); if (el7) el7.textContent = "📦 Ped " + lbl;
+          const el8 = document.getElementById("sl8"); if (el8) el8.textContent = "✅ Finaliz " + lbl;
+
+          const pct = Math.min(100, Number(rp.progresso || 0));
           const fill = document.getElementById("metaBarFill"); if (fill) fill.style.width = pct + "%";
           const pctEl = document.getElementById("metaProgPct"); if (pctEl) pctEl.textContent = pct.toFixed(0) + "%";
-          const tgt = document.getElementById("metaTarget"); if (tgt) tgt.textContent = "Meta: " + fmt(kpis.meta || 0);
-          const valTxt = document.getElementById("metaValTxt"); if (valTxt) valTxt.textContent = fmt(kpis.fatMes || 0) + " / " + fmt(kpis.meta || 0);
+          const tgt = document.getElementById("metaTarget"); if (tgt) tgt.textContent = "Meta: " + fmt(Math.round(rp.meta || 0));
+          const valTxt = document.getElementById("metaValTxt"); if (valTxt) valTxt.textContent = fmt(Math.round(rp.fatPeriodo || 0)) + " / " + fmt(Math.round(rp.meta || 0));
           const wrap = document.getElementById("metaBarWrap"); if (wrap) wrap.style.display = "block";
-        }
 
-        if (cf) {
-          const p7 = cf.previsao7 || {}; const p30 = cf.previsao30 || {};
+          const p7 = rp.previsao7 || {}; const p30 = rp.previsao30 || {};
           document.getElementById("cf7").textContent = fmt(p7.total || 0);
           document.getElementById("cf7c").textContent = (p7.count || 0) + " pedidos";
           document.getElementById("cf30").textContent = fmt(p30.total || 0);
           document.getElementById("cf30c").textContent = (p30.count || 0) + " pedidos";
+        } else {
+          const hoje = new Date().toLocaleDateString("pt-BR");
+          const hojeP = peds.filter(p => String(p["Data/Hora"] || "").startsWith(hoje));
+          const fat = hojeP.reduce((s, p) => s + Number(p["Total (R$)"] || 0), 0);
+          document.getElementById("s1").textContent = hojeP.length;
+          document.getElementById("s2").textContent = fat > 0 ? fmt(fat) : "R$ 0";
+          document.getElementById("s3").textContent = pend.length;
+          document.getElementById("s4").textContent = low.length;
         }
 
         buildHomeAlertas(prods, peds);
@@ -5708,6 +5775,25 @@
         ? `<span style="font-size:10px;color:${isOverdue ? "var(--r)" : "var(--muted)"}">${isOverdue ? "⚠️" : "📅"} ${dv}${isOverdue ? " +" + diasAt + "d" : ""}</span>`
         : "";
 
+      // Urgência Data_Acordada — countdown visual
+      const daStr = String(p["Data_Acordada"] || "").trim();
+      let urgBadge = "";
+      if (daStr && !isFinalizado && !isCancelado) {
+        let daDate;
+        const daPts = daStr.split("/");
+        if (daPts.length === 3) daDate = new Date(+daPts[2], +daPts[1]-1, +daPts[0]);
+        else if (/^\d{4}-\d{2}-\d{2}/.test(daStr)) daDate = new Date(daStr.slice(0,10));
+        if (daDate && !isNaN(daDate)) {
+          daDate.setHours(0,0,0,0);
+          const hoje = new Date(); hoje.setHours(0,0,0,0);
+          const diasParaDA = Math.ceil((daDate - hoje) / 86400000);
+          if (diasParaDA < 0)        urgBadge = `<span class="urg-badge urg-late">⚠️ ${Math.abs(diasParaDA)}d atraso</span>`;
+          else if (diasParaDA === 0) urgBadge = `<span class="urg-badge urg-warn">🔴 Hoje!</span>`;
+          else if (diasParaDA <= 3)  urgBadge = `<span class="urg-badge urg-warn">🔴 ${diasParaDA}d</span>`;
+          else if (diasParaDA <= 7)  urgBadge = `<span class="urg-badge urg-soon">🟡 ${diasParaDA}d</span>`;
+        }
+      }
+
       // Forma de pagamento
       const forma = String(p["Forma Pagamento"] || "").trim();
       const formaShort = forma.replace("Cartão de ", "").replace("Parcelado ", "Parc.").split(" ")[0];
@@ -5746,6 +5832,7 @@
             <span class="ped-row-id">#${id}</span>
             ${dataReal ? `<span style="font-size:10px;color:var(--muted)">${dataReal}</span>` : ""}
             <span class="kage ${ageClass}">${ageTxt}</span>
+            ${urgBadge}
             ${vencInfo}
             <span class="pr-status-badge" style="color:${sc};background:${sc}22">${status}</span>
           </div>
@@ -5968,29 +6055,55 @@
         </div>`;
       }
 
-      const itensRaw = p["Itens"] || p["itens"] || p["Items"] || "";
-      let itensHtml;
-      if (!itensRaw || itensRaw === "[]") {
-        itensHtml = '<span style="color:var(--muted);font-size:12px;font-style:italic">Itens não registrados</span>';
-      } else {
+      // Itens com thumbnail — layout idêntico ao verRecibo do index.html
+      const itensRaw = String(p["Itens"] || p["itens"] || p["Items"] || p["Itens (JSON)"] || "").trim();
+      const _detProdImg = (nomeI) => {
+        if (!allProds || !allProds.length || !nomeI) return "";
+        const n = String(nomeI).toLowerCase().trim();
+        const f = allProds.find(pp => String(pp["Nome do Produto"] || pp["Nome"] || "").toLowerCase().trim() === n)
+          || allProds.find(pp => { const pn = String(pp["Nome do Produto"] || pp["Nome"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
+        return f ? String(f["Imagem 1 (URL)"] || f["Imagem URL"] || "").trim() : "";
+      };
+      let detItensArr = [];
+      if (itensRaw && itensRaw !== "[]") {
         try {
-          const arr = JSON.parse(itensRaw);
-          if (Array.isArray(arr) && arr.length) {
-            itensHtml = arr.map(i => {
-              const n = i.nome || i.name || i.product || i.descricao || "?";
-              const q = i.qty || i.quantidade || i.quantity || 1;
-              const v = i.preco || i.price || i.valor || 0;
-              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)"><span>• ${n} <span style="color:var(--muted)">x${q}</span></span>${v ? `<span style="color:var(--g);font-size:12px">${fmt(Number(v) * Number(q))}</span>` : ""}</div>`;
-            }).join("");
-          } else throw new Error("not array");
+          const parsed = JSON.parse(itensRaw);
+          if (Array.isArray(parsed) && parsed.length) detItensArr = parsed;
         } catch(e) {
-          const parts = itensRaw.split("|").map(i => i.trim()).filter(Boolean);
-          if (parts.length) {
-            itensHtml = parts.map(i => `<div style="padding:3px 0;border-bottom:1px solid var(--border)">• ${i}</div>`).join("");
-          } else {
-            itensHtml = '<span style="color:var(--muted);font-size:12px;font-style:italic">Itens não registrados</span>';
-          }
+          detItensArr = itensRaw.split("|").map(s => s.trim()).filter(Boolean).map(s => {
+            const mQty = s.match(/^(.+?)\s*x\s*(\d+)\s*$/i);
+            return mQty ? { nome: mQty[1].trim(), qtd: Number(mQty[2]), valor: 0 } : { nome: s, qtd: 1, valor: 0 };
+          });
         }
+      }
+      let itensHtml;
+      if (!detItensArr.length) {
+        itensHtml = '<span style="color:var(--r);font-size:12px;font-weight:600">⚠️ Nenhum item registrado neste pedido</span>';
+      } else {
+        const somaCalc = detItensArr.reduce((s, i) => s + Number(i.valor || i.preco || i.price || 0) * Number(i.qtd || i.qty || i.quantidade || 1), 0);
+        const divergeSub = sub > 0 && Math.abs(somaCalc - sub) > 0.5;
+        itensHtml = detItensArr.map(i => {
+          const n = (i.nome || i.name || i.product || i.descricao || "?") + (i.variacao ? ` (${i.variacao})` : "");
+          const q = Number(i.qtd || i.qty || i.quantidade || i.quantity || 1);
+          const v = Number(i.valor || i.preco || i.price || 0);
+          const tot = v * q;
+          const img = _detProdImg(i.nome || i.name);
+          const thumb = img
+            ? `<img src="${img}?_nc=1" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : "";
+          const fb = `<div style="display:${img ? "none" : "flex"};align-items:center;justify-content:center;height:100%;font-size:22px;color:var(--muted)">📦</div>`;
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+            <div style="width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);flex-shrink:0;overflow:hidden">${thumb}${fb}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;color:var(--text);font-weight:700;line-height:1.35">${n}</div>
+              ${v > 0 ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${fmt(v)} × ${q} un.</div>` : `<div style="font-size:11px;color:var(--muted);margin-top:3px">${q} un.</div>`}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:14px;font-weight:900;color:var(--g)">${tot > 0 ? fmt(tot) : "—"}</div>
+              ${q > 1 && v > 0 ? `<div style="font-size:10px;color:var(--muted)">unit. ${fmt(v)}</div>` : ""}
+            </div>
+          </div>`;
+        }).join("") + (divergeSub ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(255,183,77,.1);border:1px solid rgba(255,183,77,.3);border-radius:8px;font-size:11px;color:#ffb74d">⚠️ Soma dos itens (${fmt(somaCalc)}) diverge do subtotal (${fmt(sub)}). Verifique o pedido.</div>` : "");
       }
       document.getElementById("detItens").innerHTML = itensHtml;
       document.getElementById("detFornecedor").value = p["Fornecedor_Selecionado"] || "";
@@ -6407,27 +6520,53 @@
       const cepRaw    = pedObj["CEP"] || pedObj["cep"] || "";
       const dtPed     = pedObj["Data/Hora"] || pedObj["Data_Criacao"] || new Date().toLocaleString("pt-BR");
 
-      // Itens
-      const itensRaw = String(pedObj["Itens"] || "").trim();
+      // Itens — layout com thumbnail (72×72), igual verRecibo do index.html
+      const _rcProdImg = (nomeI) => {
+        if (!allProds || !allProds.length || !nomeI) return "";
+        const n = String(nomeI).toLowerCase().trim();
+        const f = allProds.find(p => String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim() === n)
+          || allProds.find(p => { const pn = String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
+        return f ? String(f["Imagem 1 (URL)"] || f["Imagem URL"] || "").trim() : "";
+      };
+      const itensRaw = String(pedObj["Itens"] || pedObj["Itens (JSON)"] || "").trim();
       let itensHtml = "";
+      let itensCount = 0;
+      let itensArr = [];
       if (itensRaw && itensRaw !== "[]") {
         try {
-          const arr = JSON.parse(itensRaw);
-          if (Array.isArray(arr) && arr.length) {
-            itensHtml = arr.map(i => {
-              const n = i.nome || i.name || "?";
-              const q = i.qtd || i.qty || i.quantidade || 1;
-              const v = Number(i.valor || i.preco || i.price || 0);
-              return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px">
-                <span style="color:#c8e6f5">• ${n} <span style="color:#8899aa">x${q}</span></span>
-                ${v ? `<span style="color:#FF5500;font-weight:700">${fmt(v * q)}</span>` : ""}
-              </div>`;
-            }).join("");
-          } else throw 0;
+          const parsed = JSON.parse(itensRaw);
+          if (Array.isArray(parsed) && parsed.length) itensArr = parsed;
         } catch(e) {
-          const ps = itensRaw.split("|").map(s => s.trim()).filter(Boolean);
-          itensHtml = ps.map(s => `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:#c8e6f5">• ${s}</div>`).join("");
+          itensArr = itensRaw.split("|").map(s => s.trim()).filter(Boolean).map(s => {
+            const mQty = s.match(/^(.+?)\s*x\s*(\d+)\s*$/i);
+            return mQty ? { nome: mQty[1].trim(), qtd: Number(mQty[2]), valor: 0 } : { nome: s, qtd: 1, valor: 0 };
+          });
         }
+      }
+      itensCount = itensArr.length;
+      if (itensCount) {
+        itensHtml = itensArr.map(i => {
+          const n = (i.nome || i.name || "?") + (i.variacao ? ` (${i.variacao})` : "");
+          const q = Number(i.qtd || i.qty || i.quantidade || 1);
+          const v = Number(i.valor || i.preco || i.price || 0);
+          const tot = v * q;
+          const img = _rcProdImg(i.nome || i.name);
+          const thumb = img
+            ? `<img src="${img}?_nc=1" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : "";
+          const fb = `<div style="display:${img ? "none" : "flex"};align-items:center;justify-content:center;height:100%;font-size:24px;color:#8899aa">📦</div>`;
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <div style="width:72px;height:72px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow:hidden">${thumb}${fb}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;color:#FFFFFF;font-weight:700;line-height:1.35">${n}</div>
+              ${v > 0 ? `<div style="font-size:10px;color:#8899aa;margin-top:3px">${fmt(v)} × ${q} un.</div>` : `<div style="font-size:10px;color:#8899aa;margin-top:3px">${q} un.</div>`}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:14px;font-weight:900;color:#FF5500">${tot > 0 ? fmt(tot) : "—"}</div>
+              ${q > 1 && v > 0 ? `<div style="font-size:9px;color:#8899aa">unit. ${fmt(v)}</div>` : ""}
+            </div>
+          </div>`;
+        }).join("");
       }
 
       // Histórico de baixas
@@ -6440,11 +6579,14 @@
       const nPagas     = pagas.length;
       const nPend      = pendentes.length;
       const pct        = totalOrig > 0 ? Math.min(100, Math.round(totalPago / totalOrig * 100)) : 0;
+      const qtdParcAdmin = Number(pedObj["Qtd_Parcelas"] || pedObj["qtdParcelas"] || 0);
+      const totalParcAdmin = qtdParcAdmin || (nPagas + nPend) || 0;
+      const valorParcelaAdmin = totalParcAdmin > 0 ? totalOrig / totalParcAdmin : 0;
 
       const mkBaixaRow = (b, isPend, num) => {
-        const vl  = Number(isPend ? (b["Saldo_Restante"] || b["Valor_Original"] || 0) : (b["Valor_Final_Recebido"] || 0));
+        const vl  = Number(isPend ? (valorParcelaAdmin || b["Saldo_Restante"] || b["Valor_Original"] || 0) : (b["Valor_Final_Recebido"] || 0));
         const st  = b["Status_Pagamento"] || "";
-        const dt  = isPend ? (b["Proxima_Vencimento"] || "—") : (b["Data_Baixa_Efetiva"] || "—");
+        const dt  = _rcDate(isPend ? b["Proxima_Vencimento"] : b["Data_Baixa_Efetiva"]);
         const cor = isPend ? "#f44336" : (st.includes("Atraso") ? "#ffb74d" : "#FF5500");
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
           <div style="width:20px;height:20px;border-radius:50%;background:${cor}20;border:1.5px solid ${cor}55;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${cor};flex-shrink:0">${num}</div>
@@ -6464,7 +6606,7 @@
         : `<div style="font-size:12px;color:#8899aa;padding:6px 0">Nenhum pagamento registrado</div>`;
 
       // WPP message
-      const wppMsg = encodeURIComponent([
+      const wppMsgRaw = [
         `🧾 *Recibo — OrahBuy*`,
         ``,
         `👤 *${nome}*${tel ? `  📱 ${tel}` : ""}`,
@@ -6477,14 +6619,15 @@
         `💰 *Total do pedido: ${fmt(totalOrig)}*`,
         ``,
         historico.length ? `📋 *Pagamentos (${nPagas} de ${nPagas+nPend}):*` : "",
-        ...pagas.map((b,i) => `✅ ${i+1}. ${b["Data_Baixa_Efetiva"]||"—"} — ${fmt(b["Valor_Final_Recebido"])} (${b["Status_Pagamento"]})`),
-        ...pendentes.map((b,i) => `⏳ ${nPagas+i+1}. Vence ${b["Proxima_Vencimento"]||"—"} — ${fmt(b["Saldo_Restante"]||b["Valor_Original"]||0)} (Pendente)`),
+        ...pagas.map((b,i) => `✅ ${i+1}. ${_rcDate(b["Data_Baixa_Efetiva"])} — ${fmt(b["Valor_Final_Recebido"])} (${b["Status_Pagamento"]})`),
+        ...pendentes.map((b,i) => `⏳ ${nPagas+i+1}. Vence ${_rcDate(b["Proxima_Vencimento"])} — ${fmt(valorParcelaAdmin || b["Saldo_Restante"]||b["Valor_Original"]||0)} (Pendente)`),
         ``,
         `✅ *Total pago: ${fmt(totalPago)}*`,
         quitado ? `✅ *QUITADO*` : `⚠️ *Saldo devedor: ${fmt(saldo)}*`,
         ``,
-        `_OrahBuy — Obrigado pela preferência 🙏_`
-      ].filter(l => l !== null && l !== undefined).join("\n"));
+        `_${_fraseAgradecimento(quitado)}_`
+      ].filter(l => l !== null && l !== undefined).join("\n");
+      const wppMsg = encodeURIComponent(wppMsgRaw);
 
       const existing = document.getElementById("baixaReceiptModal");
       if (existing) existing.remove();
@@ -6498,7 +6641,7 @@
           ${tel ? `<a href="https://wa.me/55${tel}?text=${wppMsg}" target="_blank"
             style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(37,211,102,.2);border:1px solid #25d366;color:#25d366;border-radius:10px;padding:10px;text-decoration:none;font-weight:700;font-size:13px">
             💬 WPP</a>` : ""}
-          <button id="rcBtnImg" style="flex:1;background:rgba(0,188,212,.15);border:1px solid rgba(0,188,212,.4);color:#A0A0B0;border-radius:10px;padding:10px;font:700 13px var(--B);cursor:pointer">
+          <button id="rcBtnImg" style="flex:1;background:rgba(255,85,0,.15);border:1px solid rgba(255,85,0,.4);color:#FF7A35;border-radius:10px;padding:10px;font:700 13px var(--B);cursor:pointer">
             📸 Imagem</button>
           <button onclick="window.print()"
             style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#FFFFFF;border-radius:10px;padding:10px;font:700 13px var(--B);cursor:pointer">
@@ -6512,9 +6655,10 @@
         <div id="rcCard" style="width:100%;max-width:400px;background:#0F081D;border-radius:16px;overflow:hidden;border:1px solid #1a2840;margin:0 8px">
 
           <!-- Header gradient -->
-          <div style="background:linear-gradient(135deg,#FF5500 0%,#FF8C00 100%);padding:20px 18px 16px;text-align:center">
+          <div style="background:linear-gradient(135deg,#FF5500 0%,#FF8C00 100%);padding:20px 18px 16px;text-align:center;position:relative">
             <div style="font-size:24px;font-weight:900;color:#0F081D;letter-spacing:-1px;line-height:1">OrahBuy</div>
             <div style="font-size:11px;font-weight:700;color:#0F081D;opacity:.75;margin-top:3px;letter-spacing:.5px">RECIBO #${idPed}</div>
+            ${quitado ? `<div style="margin-top:8px;font-size:11px;font-weight:800;color:#0F081D;background:rgba(15,8,29,.14);border-radius:20px;padding:4px 12px;display:inline-block">🎉 PEDIDO QUITADO</div>` : (nPagas >= 3 ? `<div style="margin-top:8px;font-size:11px;font-weight:800;color:#0F081D;background:rgba(15,8,29,.14);border-radius:20px;padding:4px 12px;display:inline-block">🏅 CLIENTE FIEL</div>` : "")}
           </div>
 
           <!-- Info básica -->
@@ -6524,8 +6668,8 @@
               ${tel ? `<span style="font-size:11px;color:#8899aa">📱 ${tel}</span>` : ""}
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <span style="font-size:11px;color:#8899aa">${dtPed}</span>
-              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(0,188,212,.15);color:#A0A0B0;border:1px solid rgba(0,188,212,.3)">${pag}</span>
+              <span style="font-size:11px;color:#8899aa">${fmtDT(dtPed) || dtPed}</span>
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(160,160,176,.15);color:#A0A0B0;border:1px solid rgba(160,160,176,.3)">${pag}</span>
             </div>
             ${(endRaw || cepRaw) ? `<div style="font-size:10px;color:#8899aa;margin-top:4px">📍 ${[endRaw, cepRaw ? "CEP " + cepRaw : ""].filter(Boolean).join(" · ")}</div>` : ""}
             ${obsRaw ? `<div style="font-size:10px;color:#8899aa;margin-top:4px">📝 ${obsRaw}</div>` : ""}
@@ -6533,10 +6677,60 @@
 
           <!-- Itens -->
           ${itensHtml ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840">
-            <div style="font-size:9px;font-weight:700;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">ITENS</div>
+            <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🛒 ITENS DO PEDIDO${itensCount > 1 ? ` (${itensCount})` : ""}</div>
             ${itensHtml}
-          </div>` : ""}
+          </div>` : `<div style="padding:12px 16px;border-bottom:1px solid #1a2840;color:#f44336;font-size:12px">⚠️ Nenhum item registrado neste pedido</div>`}
 
+          ${(totalParcAdmin > 1 || (nPagas + nPend) > 0) ? (() => {
+            const faltam2 = totalParcAdmin - nPagas;
+            const cor2 = quitado ? "#FF5500" : nPagas > 0 ? "#FF7A35" : "#ffb74d";
+            const dots = Array.from({length: Math.min(totalParcAdmin, 12)}, (_,i) =>
+              `<div style="flex:1;height:8px;border-radius:2px;background:${i < nPagas ? "#FF5500" : i === nPagas ? cor2 : "rgba(255,255,255,.15)"}"></div>`
+            ).join("");
+            const msgMotiv = quitado
+              ? `🎉 Pedido totalmente quitado! Obrigado ${String(nome).split(" ")[0]}!`
+              : pct >= 90 ? `🔥 Quase lá! Só mais ${faltam2} parcela${faltam2>1?"s":""}`
+              : pct >= 50 ? `🎯 Na metade! Faltam ${faltam2} parcela${faltam2>1?"s":""}`
+              : pct >= 25 ? `💪 Você está indo bem! ${nPagas} de ${totalParcAdmin} pagas`
+              : nPagas > 0 ? `👏 Primeira parcela paga! Continue firme`
+              : `📅 ${totalParcAdmin} parcela${totalParcAdmin>1?"s":""} a pagar`;
+            return `<div style="padding:10px 16px;border-bottom:1px solid #1a2840;background:${quitado ? "rgba(255,85,0,.06)" : "rgba(255,122,53,.06)"}">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px">📦 PARCELAS</span>
+                <span style="font-size:12px;font-weight:800;color:${cor2}">${nPagas}${totalParcAdmin > 0 ? "/" + totalParcAdmin : ""} pagas${quitado ? " ✅" : faltam2 > 0 ? " · " + faltam2 + " restante" + (faltam2 > 1 ? "s" : "") : ""}</span>
+              </div>
+              ${totalParcAdmin > 1 ? `<div style="display:flex;gap:3px;margin-bottom:6px">${dots}</div>` : ""}
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:6px">
+                <span style="color:#8899aa">Pago: <b style="color:#FF5500">${fmt(totalPago)}</b></span>
+                <span style="color:#8899aa">Pct: <b style="color:${cor2}">${pct}%</b></span>
+                ${!quitado ? `<span style="color:#8899aa">Saldo: <b style="color:#f44336">${fmt(saldo)}</b></span>` : ""}
+              </div>
+              <div style="font-size:11px;font-weight:700;color:${cor2};text-align:center;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">${msgMotiv}</div>
+            </div>`;
+          })() : ""}
+          ${!quitado && pendentes.length ? (() => {
+            const prox = pendentes[0];
+            const dtVenc = String(prox["Proxima_Vencimento"] || "").split("T")[0];
+            let diasAte = null;
+            try {
+              const d = new Date(dtVenc);
+              if (!isNaN(d)) diasAte = Math.ceil((d - new Date()) / 86400000);
+            } catch(e) {}
+            const dtBR = dtVenc.split("-").reverse().join("/");
+            const vlProx = valorParcelaAdmin || Number(prox["Saldo_Restante"] || prox["Valor_Original"] || 0);
+            const urgencia = diasAte === null ? "" : diasAte < 0 ? `⚠️ Atrasado há ${Math.abs(diasAte)}d` : diasAte === 0 ? "🔴 Vence HOJE" : diasAte <= 3 ? `🟠 Vence em ${diasAte}d` : diasAte <= 7 ? `🟡 Vence em ${diasAte}d` : `🟢 Vence em ${diasAte}d`;
+            const corU = diasAte === null ? "#FF7A35" : diasAte < 0 ? "#f44336" : diasAte <= 3 ? "#ff8a65" : diasAte <= 7 ? "#ffb74d" : "#FF5500";
+            return `<div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:linear-gradient(135deg,rgba(255,122,53,.08),rgba(255,85,0,.04))">
+              <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📅 PRÓXIMO PAGAMENTO</div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-size:18px;font-weight:900;color:${corU}">${fmt(vlProx)}</div>
+                  <div style="font-size:10px;color:#8899aa;margin-top:2px">${dtBR || "—"}</div>
+                </div>
+                <div style="font-size:11px;font-weight:800;color:${corU};text-align:right">${urgencia}</div>
+              </div>
+            </div>`;
+          })() : ""}
           <!-- Valores do pedido -->
           <div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:#0F081D">
             ${subtotal !== totalOrig && desconto > 0 ? `
@@ -6574,7 +6768,7 @@
               <span style="font-size:12px;color:#8899aa">Total pago</span>
               <span style="font-size:14px;font-weight:800;color:#FF5500">${fmt(totalPago)}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:${quitado?"rgba(0,230,118,.1)":"rgba(244,67,54,.12)"};border:1px solid ${quitado?"rgba(0,230,118,.25)":"rgba(244,67,54,.3)"}">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:${quitado?"rgba(255,85,0,.1)":"rgba(244,67,54,.12)"};border:1px solid ${quitado?"rgba(255,85,0,.25)":"rgba(244,67,54,.3)"}">
               <div>
                 <div style="font-size:13px;font-weight:700;color:${quitado?"#FF5500":"#f44336"}">${quitado ? "✅ QUITADO" : "⚠️ SALDO DEVEDOR"}</div>
                 ${!quitado && nPend > 0 ? `<div style="font-size:10px;color:#8899aa;margin-top:2px">${nPend} parcela${nPend>1?"s":""} em aberto</div>` : ""}
@@ -6585,6 +6779,7 @@
 
           <!-- Footer -->
           <div style="text-align:center;padding:12px;background:#0F081D;border-top:1px solid #1a2840;font-size:10px;color:#8899aa">
+            <div style="font-weight:700;color:#FFFFFF;margin-bottom:2px">${String(nome).split(" ")[0]}, conte sempre com a gente! 🧡</div>
             OrahBuy &nbsp;•&nbsp; Obrigado pela preferência 🙏
           </div>
         </div>`;
@@ -6600,15 +6795,19 @@
           const canvas = await html2canvas(card, { scale: 2.5, backgroundColor: "#0F081D", useCORS: true, logging: false });
           canvas.toBlob(blob => {
             const file = new File([blob], `recibo-${idPed}.png`, { type: "image/png" });
+            // Share nativo já leva texto + imagem juntos (WhatsApp usa "text" como legenda)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              navigator.share({ files: [file], title: "Recibo OrahBuy" }).catch(() => {});
+              navigator.share({ files: [file], text: wppMsgRaw, title: "Recibo OrahBuy" }).catch(() => {});
+              btn.textContent = "✅ Enviado!";
             } else {
+              // Sem suporte a share de arquivo (desktop): baixa a imagem + abre WhatsApp com o texto pronto.
               const a = document.createElement("a");
               a.href = URL.createObjectURL(blob);
               a.download = `recibo-${idPed}.png`;
               a.click();
+              if (tel) window.open(`https://wa.me/55${tel}?text=${wppMsg}`, "_blank");
+              btn.textContent = "✅ Baixado — anexe no WhatsApp";
             }
-            btn.textContent = "✅ Salvo!";
             btn.disabled = false;
           }, "image/png");
         } catch(e) {

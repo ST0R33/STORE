@@ -2359,6 +2359,10 @@ function npRenderProds(q) {
       const stockInfo = st > 0
         ? `<div style="font-size:9px;color:var(--muted)">📦 ${st} un.</div>`
         : `<div style="font-size:9px;color:var(--r)">⚠️ sem estoque</div>`;
+      const custoUnit = Number(p["Custo_Unitario"] || 0);
+      const custoInfo = custoUnit > 0
+        ? `<div style="font-size:9px;color:var(--g)">💰 custo ${fmt(custoUnit)} · margem ${Math.round((1 - custoUnit / (v || 1)) * 100)}%</div>`
+        : `<div style="font-size:9px;color:var(--muted)">⚠️ sem custo</div>`;
       const clickFn = st > 0 ? `npAddProd('${escN}',${v})` : `npAddProdSemEstoque('${escN}',${v})`;
       const imgHtml = img
         ? `<div class="np-prod-img-wrap">
@@ -2372,6 +2376,7 @@ function npRenderProds(q) {
           <div style="font-size:10px;font-weight:700;line-height:1.3;color:var(--text)">${n}</div>
           <div style="color:var(--g);font-weight:800;font-size:12px">${fmt(v)}</div>
           ${stockInfo}
+          ${custoInfo}
         </div>
       </div>`;
     }).join("");
