@@ -3120,6 +3120,14 @@
         </div>
         <button class="nca-btn">Ver produtos →</button>
       </div>
+      <div id="fixIdsAlert" onclick="corrigirIdsProdutosAdmin()" style="display:none;margin-bottom:12px;background:rgba(229,57,53,.12);border:1px solid rgba(229,57,53,.35);border-radius:12px;padding:11px 14px;align-items:center;gap:10px;cursor:pointer">
+        <span style="font-size:18px;flex-shrink:0">🆔</span>
+        <div style="flex:1;font-size:13px;color:#ef5350;font-weight:700">
+          <span id="fixIdsCount"></span> produto(s) com ID repetido
+          <div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:1px">Inativar/Excluir age no produto errado enquanto isso — clique para corrigir</div>
+        </div>
+        <button style="font-size:11px;background:rgba(229,57,53,.2);border:1px solid rgba(229,57,53,.45);color:#ef5350;border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap">Corrigir agora →</button>
+      </div>
       <div id="nocustoAlert" onclick="document.getElementById('pstatus').value='__sem_custo__';prodFilterChanged()" style="display:none">
         <span class="nca-icon">⚠️</span>
         <div class="nca-text">
@@ -5275,13 +5283,45 @@
       const lm = document.getElementById("prodLoadMore");
       if (lm) lm.style.display = batch.length < list.length ? "block" : "none";
     }
+    // Conta ID vazio E ID repetido. O repetido e o mais perigoso: findRow no backend devolve
+    // sempre a 1a linha que casa, entao acao no 2o produto acaba caindo no 1o (outro produto).
     function _checkFixIdsAlert() {
-      const semId = allProds.filter(p => !String(p["ID"] || "").trim()).length;
       const el = document.getElementById("fixIdsAlert");
       const cnt = document.getElementById("fixIdsCount");
       if (!el) return;
-      if (semId > 0) { if (cnt) cnt.textContent = semId; el.style.display = "flex"; }
-      else el.style.display = "none";
+      const vistos = {}, repetidos = {};
+      let semId = 0;
+      allProds.forEach(p => {
+        const id = String(p["ID"] || "").trim();
+        if (!id) { semId++; return; }
+        if (vistos[id]) repetidos[id] = true; else vistos[id] = true;
+      });
+      const nRep = Object.keys(repetidos).length;
+      const total = semId + nRep;
+      if (total > 0) {
+        if (cnt) cnt.textContent = nRep > 0 ? nRep : semId;
+        el.style.display = "flex";
+      } else el.style.display = "none";
+    }
+
+    async function corrigirIdsProdutosAdmin() {
+      let diag = null;
+      try { diag = await apiGet("diagnosticarIdsProdutos"); } catch (e) {}
+      const qtd = diag && diag.ok ? diag.duplicados : "?";
+      const linhas = diag && diag.ok ? diag.linhasAfetadas : "?";
+      if (!confirm(
+        `Corrigir IDs repetidos?\n\n${qtd} ID(s) estao repetidos, afetando ${linhas} produto(s).\n\n` +
+        `Produtos DIFERENTES acabaram com o mesmo ID (import em levas). Por isso Inativar/Excluir ` +
+        `age no produto errado.\n\nA correcao mantem a primeira ocorrencia com o ID atual e da um ID ` +
+        `novo as demais. NENHUM produto e apagado.`
+      )) return;
+      try {
+        const res = await apiGet("corrigirIdsProdutos");
+        if (res && res.ok) {
+          toast(`${res.corrigidos} ID(s) corrigido(s) ✅`);
+          allProds = []; await loadProds();
+        } else toast((res && (res.erro || res.error)) || "Erro ao corrigir", "err");
+      } catch (e) { toast("Erro de conexao", "err"); }
     }
 
     // MARGEM EM LOTE — seleciona N produtos, define % de margem sobre o custo, recalcula
