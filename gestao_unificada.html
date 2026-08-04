@@ -1821,9 +1821,11 @@ function _getProdImg(nome) {
 }
 
 async function showRecibo(pedId) {
-  // Carrega produtos para thumbnail se ainda não carregados
+  // Carrega produtos para thumbnail se ainda não carregados.
+  // verTodos:1 é essencial aqui: pedido antigo pode conter produto que já foi inativado —
+  // sem isso o item aparece sem foto porque getProdutos filtra inativo por padrão.
   if (!allProds.length) {
-    try { const r = await apiGet("getProdutos"); allProds = r.produtos || []; } catch {}
+    try { const r = await apiGet("getProdutos", { verTodos: "1" }); allProds = r.produtos || []; } catch {}
   }
   try {
   const p = allPeds.find(x => String(x["ID Pedido"]) === String(pedId));
