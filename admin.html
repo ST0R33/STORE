@@ -4400,6 +4400,16 @@
 
     let TOKEN = "";
     let _loginTipo = "admin";
+    // Senha do admin mantida SO em memoria (nao vai pro localStorage) para nao pedir prompt a
+    // cada acao protegida. Se a pagina for recarregada, cai no prompt normalmente.
+    let _adminSenhaMem = "";
+    async function _senhaAdmin(motivo) {
+      if (_adminSenhaMem) return _adminSenhaMem;
+      const v = prompt(motivo || "Confirme a SENHA DE ADMIN:");
+      if (v === null) return null;
+      _adminSenhaMem = v;
+      return v;
+    }
     const _SIG = "\n\n———————————————\nOrahBuy\n_MENSAGEM AUTOMÁTICA — SISTEMA ORAHBUY_";
     let allProds = [], allPeds = [];
     // N6: export CSV genérico — BOM UTF-8 pra Excel abrir acentuação certa sem escolher encoding
@@ -4662,6 +4672,7 @@
         }
         if (res.ok) {
           TOKEN = res.token;
+          if (_loginTipo === "admin") _adminSenhaMem = senha;
           const sessData = { token: TOKEN, ts: Date.now(), tipo: _loginTipo };
           if (_loginTipo === "operador") { sessData.opId = res.opId; sessData.opNome = res.opNome; }
           localStorage.setItem("ob_session", JSON.stringify(sessData));
@@ -5417,7 +5428,7 @@
       const comCusto = selecionados.filter(p => Number(p["Custo_Unitario"] || 0) > 0);
       const semCustoQtd = selecionados.length - comCusto.length;
       if (!comCusto.length) { toast("Nenhum dos selecionados tem custo cadastrado", "err"); return; }
-      const adminSenha = prompt(`Confirme a SENHA DE ADMIN para atualizar o preço de ${comCusto.length} produto(s):`);
+      const adminSenha = await _senhaAdmin(`Confirme a SENHA DE ADMIN para atualizar o preço de ${comCusto.length} produto(s):`);
       if (adminSenha === null) return;
       const itens = comCusto.map(p => {
         const custo = Number(p["Custo_Unitario"] || 0);
@@ -9705,17 +9716,25 @@
     // Exclusao PERMANENTE de produto. O backend (excluirProdutoHard) copia a linha inteira pra
     // aba _Lixeira_Produtos antes do delete e exige senha de admin — da pra recuperar depois.
     async function excluirProdutoAdmin(id, nome) {
-      if (!id) { toast("Produto sem ID — nao da pra excluir", "err"); return; }
-      if (!confirm(`Excluir permanentemente "${nome || id}"?\n\nA linha sai da aba Produtos, mas fica uma copia em _Lixeira_Produtos para recuperar se precisar.\n\nSe a intencao e so tirar da loja, use "Inativar" no lugar.`)) return;
-      const adminSenha = prompt("Confirme a SENHA DE ADMIN para excluir o produto:");
+      if (!id) { toast("Produto sem ID — não dá pra excluir", "err"); return; }
+      if (!confirm(`Excluir permanentemente "${nome || id}"?\n\nA linha sai da aba Produtos, mas fica uma cópia em _Lixeira_Produtos para recuperar se precisar.\n\nSe a intenção é só tirar da loja, use "Inativar" no lugar.`)) return;
+      const adminSenha = await _senhaAdmin("Confirme a SENHA DE ADMIN para excluir o produto:");
       if (adminSenha === null) return;
       try {
         const res = await apiPost("excluirProdutoHard", { id, adminSenha });
         if (res && res.ok) {
-          toast(`Produto excluido 🗑️ (backup em _Lixeira_Produtos)`);
+          // Some da tela na hora, sem esperar o reload — era a queixa "fica ali como se nada
+          // tivesse acontecido". O reload depois so reconcilia com a planilha.
+          allProds = allProds.filter(p => String(p["ID"]) !== String(id));
+          renderProds();
+          toast(`"${nome || id}" excluído 🗑️ (backup em _Lixeira_Produtos)`);
           allProds = []; await loadProds();
-        } else toast(res && (res.erro || res.error) || "Erro ao excluir", "err");
-      } catch (e) { toast("Erro de conexao", "err"); }
+        } else {
+          const msg = (res && (res.erro || res.error)) || "Erro ao excluir";
+          if (/autoriza/i.test(msg)) { _adminSenhaMem = ""; alert("Senha de admin incorreta — o produto NÃO foi excluído.\n\nTente de novo e digite a senha correta."); }
+          else alert("Não foi possível excluir: " + msg);
+        }
+      } catch (e) { alert("Erro de conexão — o produto não foi excluído."); }
     }
 
     // peds-list: cliques tratados inline nos botões do buildPedRow (onclick direto)
@@ -10588,10 +10607,10 @@
         return;
       }
       if (delBtn) {
-        const adminSenha = prompt("Confirme a SENHA DE ADMIN para excluir operador:");
-        if (adminSenha === null) return;
         toastUndo("Operador removido.",
           async () => {
+            const adminSenha = await _senhaAdmin("Confirme a SENHA DE ADMIN para excluir operador:");
+            if (adminSenha === null) { loadOperadores(); return; }
             const r = await apiGet("deletarOperador", { id: delBtn.dataset.opDel, adminSenha }).catch(() => ({ ok: false }));
             if (r.ok) { if (r.inativado) toast("⚠️ " + (r.aviso || "Operador inativado (tem pedidos vinculados)")); else toast("Operador removido ✅"); loadOperadores(); } else toast(r.error || "Erro ao deletar", "err");
           },
@@ -10869,7 +10888,7 @@
     async function deletarCliente(id, nome) {
       if (!id) { toast("Cliente sem ID (importado do histórico). Não é possível deletar.", "err"); return; }
       if (!confirm(`Remover "${nome}" da base de clientes?`)) return;
-      const adminSenha = prompt("Confirme a SENHA DE ADMIN para excluir cliente:");
+      const adminSenha = await _senhaAdmin("Confirme a SENHA DE ADMIN para excluir cliente:");
       if (adminSenha === null) return;
       try {
         const r = await apiGet("deletarCliente", { id, adminSenha });
