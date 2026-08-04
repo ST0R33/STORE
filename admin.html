@@ -881,18 +881,18 @@
       margin-bottom: 13px
     }
 
-    #nocatAlert {
+    #nocatAlert, #nocustoAlert {
       display: none; margin-bottom: 12px;
       background: rgba(255,152,0,.1); border: 1px solid rgba(255,152,0,.35);
       border-radius: 12px; padding: 11px 14px;
       display: none; align-items: center; gap: 10px; cursor: pointer;
       transition: background .2s;
     }
-    #nocatAlert:hover { background: rgba(255,152,0,.18); }
-    #nocatAlert .nca-icon { font-size: 18px; flex-shrink: 0; }
-    #nocatAlert .nca-text { flex: 1; font-size: 13px; color: #ffb300; font-weight: 700; }
-    #nocatAlert .nca-sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
-    #nocatAlert .nca-btn { font-size: 11px; background: rgba(255,152,0,.2); border: 1px solid rgba(255,152,0,.4); color: #ffb300; border-radius: 8px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+    #nocatAlert:hover, #nocustoAlert:hover { background: rgba(255,152,0,.18); }
+    #nocatAlert .nca-icon, #nocustoAlert .nca-icon { font-size: 18px; flex-shrink: 0; }
+    #nocatAlert .nca-text, #nocustoAlert .nca-text { flex: 1; font-size: 13px; color: #ffb300; font-weight: 700; }
+    #nocatAlert .nca-sub, #nocustoAlert .nca-sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+    #nocatAlert .nca-btn, #nocustoAlert .nca-btn { font-size: 11px; background: rgba(255,152,0,.2); border: 1px solid rgba(255,152,0,.4); color: #ffb300; border-radius: 8px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
 
     #nocatModal {
       display: none; position: fixed; inset: 0; z-index: 700;
@@ -978,41 +978,36 @@
     }
 
     .plist {
-      display: flex;
-      flex-direction: column;
-      gap: 8px
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px
+    }
+    /* min-width:0 é essencial em item de grid — sem isso o conteúdo intrínseco (botões, texto)
+       força a coluna a crescer além do 1fr e o card vaza/corta visualmente na borda */
+    .plist > * { min-width: 0; }
+    @media (min-width: 720px) {
+      .plist { grid-template-columns: repeat(4, 1fr); }
     }
 
-    .prow {
+    .pcard {
       background: var(--d2);
       border: 1px solid var(--border);
       border-radius: 13px;
-      padding: 11px 13px;
+      overflow: hidden;
       display: flex;
-      gap: 11px;
-      align-items: center
-    }
-    /* Responsive: nome isolado no topo, linha inferior c/ preço + botões */
-    @media (max-width: 500px) {
-      .prow { flex-wrap: wrap; gap: 6px; }
-      .prow .pinfo { order: -1; flex: 0 0 100%; }
-      .prow .pnm { white-space: normal; overflow: visible; text-overflow: clip; }
-      .prow .pthumb { order: 1; width: 36px; height: 36px; }
-      .prow .pprice { order: 2; flex: 1; font-size: 14px; }
-      .prow .pacts { order: 3; }
+      flex-direction: column
     }
 
     .pthumb {
-      width: 52px;
-      height: 52px;
-      border-radius: 10px;
+      width: 100%;
+      aspect-ratio: 1;
       background: var(--d3);
-      flex-shrink: 0;
+      position: relative;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px
+      font-size: 28px
     }
 
     .pthumb img {
@@ -1021,7 +1016,21 @@
       object-fit: cover
     }
 
+    .pstatus-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 20px;
+      backdrop-filter: blur(4px)
+    }
+    .pstatus-badge.on { background: rgba(255,85,0,.85); color: #0F081D; }
+    .pstatus-badge.off { background: rgba(244,67,54,.85); color: #fff; }
+
     .pinfo {
+      padding: 9px 10px 4px;
       flex: 1;
       min-width: 0
     }
@@ -1029,42 +1038,65 @@
     .pnm {
       font-family: var(--H);
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+
+    .pmeta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis
     }
 
-    .pmeta {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 3px
+    .pprecos {
+      padding: 4px 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px
+    }
+
+    .pcusto {
+      font-size: 10px;
+      color: var(--muted)
     }
 
     .pprice {
       font-family: var(--H);
       font-weight: 900;
       font-size: 15px;
-      color: var(--g);
-      flex-shrink: 0
+      color: var(--g)
+    }
+
+    .pmargem {
+      font-size: 10px;
+      font-weight: 700
     }
 
     .pacts {
       display: flex;
       gap: 5px;
-      flex-shrink: 0
+      padding: 0 8px 8px
     }
 
     .actbtn {
-      width: 32px;
-      height: 32px;
+      flex: 1;
+      height: 30px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
       transition: opacity .15s
     }
 
@@ -1073,7 +1105,7 @@
     }
 
     .ae {
-      background: rgba(255, 85, 0, .13);
+      background: rgba(255, 122, 53, .13);
       color: var(--c)
     }
 
@@ -3014,6 +3046,11 @@
       </div>
       <!-- Alertas -->
       <div id="homeAlertas"></div>
+      <!-- Cobranças Pendentes -->
+      <div class="dsec">
+        <div class="dtitle">🔔 Cobranças — quem esqueci / atrasado</div>
+        <div id="homeCobrancas"><div class="loading"><div class="spin"></div>Carregando...</div></div>
+      </div>
       <!-- Top Produtos Vendidos -->
       <div class="dsec">
         <div class="dtitle">🏆 Top Produtos Vendidos</div>
@@ -3060,11 +3097,11 @@
     <div class="page" id="page-prod">
       <div class="toolbar">
         <div class="sbox"><span style="opacity:.4">🔍</span><input type="text" id="psearch" placeholder="Buscar..."
-            oninput="renderProds()"></div>
-        <select class="fsel" id="pcat" onchange="renderProds()">
+            oninput="prodFilterChanged()"></div>
+        <select class="fsel" id="pcat" onchange="prodFilterChanged()">
           <option value="">Todas categorias</option>
         </select>
-        <select class="fsel" id="pstatus" onchange="renderProds()">
+        <select class="fsel" id="pstatus" onchange="prodFilterChanged()">
           <option value="">Todos</option>
           <option>Ativo</option>
           <option>Inativo</option>
@@ -3083,10 +3120,21 @@
         </div>
         <button class="nca-btn">Ver produtos →</button>
       </div>
+      <div id="nocustoAlert" onclick="document.getElementById('pstatus').value='__sem_custo__';prodFilterChanged()" style="display:none">
+        <span class="nca-icon">⚠️</span>
+        <div class="nca-text">
+          <span id="nocustoCount"></span> produto(s) sem custo cadastrado
+          <div class="nca-sub">Painel de Lucro (Analytics) e Margem em Lote não funcionam sem isso — clique para ver e corrigir</div>
+        </div>
+        <button class="nca-btn">Ver produtos →</button>
+      </div>
       <div class="plist" id="plist">
         <div class="loading">
           <div class="spin"></div>Carregando...
         </div>
+      </div>
+      <div id="prodLoadMore" style="display:none;text-align:center;margin-top:12px">
+        <button class="addbtn" style="background:var(--d3);color:var(--fg)" onclick="prodShowMore()">Carregar mais →</button>
       </div>
     </div>
 
@@ -4327,6 +4375,7 @@
 
     let TOKEN = "";
     let _loginTipo = "admin";
+    const _SIG = "\n\n———————————————\nOrahBuy\n_MENSAGEM AUTOMÁTICA — SISTEMA ORAHBUY_";
     let allProds = [], allPeds = [];
     // N6: export CSV genérico — BOM UTF-8 pra Excel abrir acentuação certa sem escolher encoding
     function _csvCell(v) {
@@ -4692,6 +4741,41 @@
     }
 
     // HOME
+    function _cobrancaMsg(c) {
+      const nome = c.nome || "Cliente";
+      const valor = fmt(c.valor);
+      const venc = c.vencimento || "—";
+      const itensLinha = c.itens ? `📦 ${c.itens}\n` : "";
+      if (c.urgencia === "atrasado") {
+        return `Olá ${nome}! ⏰\nSua parcela do pedido #${c.idPedido} venceu há ${c.diasAtraso} dia${c.diasAtraso > 1 ? "s" : ""}.\n\n📋 Pedido: #${c.idPedido}\n${itensLinha}📅 Venceu em: ${venc}\n💰 Valor em aberto: ${valor}\n⚠️ Juros estimados: ${fmt(c.jurosEstimado)} (R$5/dia de atraso)\n\nPara regularizar, é só responder aqui ou chamar a gente 😉` + _SIG;
+      }
+      const diasTxt = c.diasRestantes === 0 ? "vence HOJE" : `vence em ${c.diasRestantes} dia${c.diasRestantes > 1 ? "s" : ""}`;
+      return `Olá ${nome}! Lembrando que sua parcela do pedido #${c.idPedido} ${diasTxt}.\n\n${itensLinha}📅 Vencimento: ${venc}\n💰 Valor: ${valor}\n\n⚠️ Após o vencimento, são acrescidos R$5 por dia de atraso.\n\nSe já pagou, desconsidere esta mensagem ✅\nSe precisar de ajuda, é só chamar!` + _SIG;
+    }
+    function renderCobrancas(lista) {
+      const el = document.getElementById("homeCobrancas");
+      if (!el) return;
+      if (!lista || !lista.length) { el.innerHTML = `<div class="empty" style="color:var(--muted)">Nenhuma cobrança pendente 🎉</div>`; return; }
+      const cores  = { atrasado: "#f44336", hoje: "#ff9800", proximo: "#ffc107", futuro: "#8899aa", sem_data: "#8899aa" };
+      const labels = { atrasado: "⚠️", hoje: "🔴 Vence hoje", proximo: "🟡 Próximo", futuro: "🔵 Futuro", sem_data: "— Sem data" };
+      el.innerHTML = lista.slice(0, 15).map(c => {
+        const cor = cores[c.urgencia] || "#8899aa";
+        const lbl = c.urgencia === "atrasado" ? `⚠️ ${c.diasAtraso}d atrasado` : (labels[c.urgencia] || "");
+        const tel = String(c.telefone || "").replace(/\D/g, "");
+        const msg = encodeURIComponent(_cobrancaMsg(c));
+        const wppBtn = tel
+          ? `<a href="https://wa.me/55${tel}?text=${msg}" target="_blank" style="background:#25d366;color:#04140b;border-radius:8px;padding:6px 12px;text-decoration:none;font-size:12px;font-weight:800;white-space:nowrap">💬 Cobrar</a>`
+          : `<span style="font-size:10px;color:var(--muted)">sem tel.</span>`;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700">${c.nome || "—"} <span style="font-weight:400;color:var(--muted);font-size:11px">#${c.idPedido}</span></div>
+            <div style="font-size:11px;color:${cor};font-weight:600">${lbl} · ${c.vencimento || "sem data"}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0"><div style="font-size:13px;font-weight:800;color:${cor}">${fmt(c.valor)}</div></div>
+          ${wppBtn}
+        </div>`;
+      }).join("") + (lista.length > 15 ? `<div style="text-align:center;font-size:11px;color:var(--muted);padding-top:6px">+ ${lista.length - 15} outras pendências</div>` : "");
+    }
     let homeFilter = "30";
     async function loadHome(periodo) {
       if (periodo) {
@@ -4701,11 +4785,13 @@
       renderGreeting();
       updateOnlineStatus();
       try {
-        const [pr, pp, rp] = await Promise.all([
+        const [pr, pp, rp, cb] = await Promise.all([
           apiGet("getProdutos"),
           apiGet("getPedidos"),
-          apiGet("getResumoPeriodo", { periodo: homeFilter }).catch(() => null)
+          apiGet("getResumoPeriodo", { periodo: homeFilter }).catch(() => null),
+          apiGet("getCobrancasPendentes").catch(() => null)
         ]);
+        renderCobrancas(cb && cb.ok ? cb.cobrancas : []);
         const prods = (pr && Array.isArray(pr.produtos)) ? pr.produtos : [];
         const peds  = (pp && Array.isArray(pp.pedidos))  ? pp.pedidos  : [];
         allProds = prods; allPeds = peds;
@@ -5081,6 +5167,9 @@
       renderProds();
     }
 
+    let _prodVisibleCount = 40;
+    function prodFilterChanged() { _prodVisibleCount = 40; renderProds(); }
+    function prodShowMore() { _prodVisibleCount += 40; renderProds(); }
     function renderProds() {
       const q = (document.getElementById("psearch").value || "").toLowerCase();
       const cat = document.getElementById("pcat").value;
@@ -5098,6 +5187,14 @@
         if (semCat.length > 0) { alertEl.style.display = "flex"; if (cntNc) cntNc.textContent = semCat.length; }
         else { alertEl.style.display = "none"; }
       }
+      const semCusto = allProds.filter(p => p["Status"] !== "Inativo" && !Number(p["Custo_Unitario"] || 0));
+      const alertCustoEl = document.getElementById("nocustoAlert");
+      const cntNcu = document.getElementById("nocustoCount");
+      if (alertCustoEl) {
+        if (semCusto.length > 0) { alertCustoEl.style.display = "flex"; if (cntNcu) cntNcu.textContent = semCusto.length; }
+        else { alertCustoEl.style.display = "none"; }
+      }
+      _checkFixIdsAlert();
       const list = allProds.filter(p => {
         const mq = !q || (p["Nome do Produto"] || "").toLowerCase().includes(q);
         const mcat = !cat || cat === "__sem_cat__" || p["Categoria"] === cat;
@@ -5108,24 +5205,49 @@
         return mq && mcat && mst;
       });
       const el = document.getElementById("plist");
-      if (!list.length) { el.innerHTML = `<div class="empty">Nenhum produto encontrado</div>`; return; }
-      el.innerHTML = list.map(p => {
+      if (!list.length) {
+        el.innerHTML = `<div class="empty">Nenhum produto encontrado</div>`;
+        const lm0 = document.getElementById("prodLoadMore"); if (lm0) lm0.style.display = "none";
+        return;
+      }
+      const batch = list.slice(0, _prodVisibleCount);
+      el.innerHTML = batch.map(p => {
         const img = p["Imagem 1 (URL)"] || "";
-        const forn = p["Fornecedores_JSON"] ? (() => { try { return JSON.parse(p["Fornecedores_JSON"]).length + " forn."; } catch (e) { return ""; } })() : "";
-        const gar = p["Garantia_Padrao"] ? p["Garantia_Padrao"].toString().substring(0, 20) : "";
-        return `<div class="prow">
-      <div class="pthumb">${img ? `<img src="${img}" onerror="this.style.display='none'">` : "📦"}</div>
+        const ativo = p["Status"] === "Ativo";
+        const custo = Number(p["Custo_Unitario"] || 0);
+        const venda = Number(p["Preço (R$)"] || 0);
+        const temCusto = custo > 0;
+        const margemPct = temCusto && venda > 0 ? ((venda - custo) / venda * 100) : null;
+        return `<div class="pcard">
+      <div class="pthumb">
+        ${img ? `<img src="${img}" onerror="this.style.display='none'">` : "📦"}
+        <span class="pstatus-badge ${ativo ? "on" : "off"}">${ativo ? "Ativo" : "Inativo"}</span>
+      </div>
       <div class="pinfo">
         <div class="pnm">${p["Nome do Produto"] || "—"}</div>
-        <div class="pmeta">${p["Categoria"] || ""} · Est: ${p["Estoque"] || 0} · <span style="color:${p["Status"] === "Ativo" ? "var(--g)" : "var(--r)"}">${p["Status"] || ""}</span>${forn ? " · " + forn : ""}${gar ? " · " + gar : ""}</div>
+        <div class="pmeta">${p["Categoria"] || "sem categoria"} · Est: ${p["Estoque"] || 0}</div>
       </div>
-      <div class="pprice">${fmt(p["Preço (R$)"])}</div>
+      <div class="pprecos">
+        ${temCusto ? `<div class="pcusto">Custo ${fmt(custo)}</div>` : ""}
+        <div class="pprice">${fmt(venda)}</div>
+        ${margemPct !== null ? `<div class="pmargem" style="color:${margemPct >= 0 ? "var(--g)" : "var(--r)"}">${margemPct.toFixed(0)}% margem</div>` : ""}
+      </div>
       <div class="pacts">
-        <button class="actbtn ae" data-prod-id="${p["ID"]}">✏️</button>
-        <button class="actbtn ${p["Status"] === "Ativo" ? "at-on" : "at-off"}" data-toggle-id="${p["ID"]}" data-toggle-status="${p["Status"] === "Ativo" ? "Inativo" : "Ativo"}" title="${p["Status"] === "Ativo" ? "Inativar" : "Ativar"}">${p["Status"] === "Ativo" ? "🔴" : "🟢"}</button>
+        <button class="actbtn ae" data-prod-id="${p["ID"]}">✏️ Editar</button>
+        <button class="actbtn ${ativo ? "at-on" : "at-off"}" data-toggle-id="${p["ID"]}" data-toggle-status="${ativo ? "Inativo" : "Ativo"}" title="${ativo ? "Inativar" : "Ativar"}">${ativo ? "🔴 Inativar" : "🟢 Ativar"}</button>
       </div>
     </div>`;
       }).join("");
+      const lm = document.getElementById("prodLoadMore");
+      if (lm) lm.style.display = batch.length < list.length ? "block" : "none";
+    }
+    function _checkFixIdsAlert() {
+      const semId = allProds.filter(p => !String(p["ID"] || "").trim()).length;
+      const el = document.getElementById("fixIdsAlert");
+      const cnt = document.getElementById("fixIdsCount");
+      if (!el) return;
+      if (semId > 0) { if (cnt) cnt.textContent = semId; el.style.display = "flex"; }
+      else el.style.display = "none";
     }
 
     // MARGEM EM LOTE — seleciona N produtos, define % de margem sobre o custo, recalcula
