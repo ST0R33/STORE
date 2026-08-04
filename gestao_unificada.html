@@ -627,6 +627,28 @@ let filtStatus = "", filtSearch = "", visibleCount = 30;
 let kpiFilter = null;
 let currentPed = null, currentBxStatus = "No Prazo";
 let _storeName = "OrahBuy";
+const _SIG = "\n\n_MENSAGEM AUTOMÁTICA — SISTEMA ORAHBUY_";
+// W1: frases variadas de agradecimento — evita recibo sempre igual. quitado=true usa tom de celebração
+function _fraseAgradecimento(quitado) {
+  const quit = ["🎉 *Pedido quitado!* Muito obrigado pela confiança, conte sempre com a gente 🧡",
+    "🎉 Tudo pago! Foi um prazer atender você — volte sempre 🛒",
+    "✅ Quitado com sucesso! Obrigado por fechar negócio com a OrahBuy 🙏",
+    "🎉 Fechamos com chave de ouro! Obrigado pela preferência 🧡"];
+  const parcial = ["Obrigado pela preferência 🙏 Qualquer dúvida sobre o saldo, é só chamar!",
+    "Valeu pela confiança! Seguimos à disposição até a última parcela 🧡",
+    "Obrigado por manter tudo em dia — conte sempre com a gente 🙏",
+    "Sua confiança é muito importante pra gente. Obrigado! 🧡"];
+  const arr = quitado ? quit : parcial;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+// BUG-RECIBO-DATA-CRUA: GAS devolve datas como ISO (2026-07-31T07:00:00.000Z) quando vem de
+// objeto Date da planilha — sem isso, recibo mostra a string crua em vez de dd/mm/aaaa.
+function _rcDate(v) {
+  if (!v) return "—";
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) { try { return new Date(s).toLocaleDateString("pt-BR"); } catch(e) { return s; } }
+  return s;
+}
 
 const PED_PAGE = 30;
 const TAXA_DIARIA = 0.33;
@@ -1820,53 +1842,47 @@ async function showRecibo(pedId) {
   const cep = cepRaw !== null && cepRaw !== undefined ? String(cepRaw).trim() : "";
   const enderecoFmt = [endereco, cep ? `CEP ${cep}` : ""].filter(Boolean).join(" — ");
   const qtdParc = Number(p["Qtd_Parcelas"] || 0);
-  const itensRaw = String(p["Itens"] || "").trim();
+  const itensRaw = String((p["Itens (JSON)"] || p["Itens"]) || "").trim();
 
-  // ── Itens HTML (imagem + preço + qtd + total) ──
-  let itensHtml = "";
+  // ── Itens HTML — layout com thumbnail 72×72, igual verRecibo do index.html ──
   let itensArr = [];
   if (itensRaw && itensRaw !== "[]") {
     try {
-      const arr = JSON.parse(itensRaw);
-      if (Array.isArray(arr) && arr.length) {
-        itensArr = arr;
-        itensHtml = arr.map(i => {
-          const n = i.nome || i.name || "?";
-          const q = Number(i.qtd || i.qty || 1);
-          const v = Number(i.valor || i.preco || 0);
-          const tot = v * q;
-          const img = _getProdImg(n);
-          const thumbHtml = img
-            ? `<img src="${img}?_nc=1" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-            : "";
-          const fallback = `<div style="display:${img?"none":"flex"};align-items:center;justify-content:center;height:100%;font-size:20px;color:#8899aa">📦</div>`;
-          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-            <div style="width:54px;height:54px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow:hidden">
-              ${thumbHtml}${fallback}
-            </div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;color:#FFFFFF;font-weight:700;line-height:1.35">${n}</div>
-              ${v > 0 ? `<div style="font-size:10px;color:#8899aa;margin-top:3px">${fmt(v)} × ${q} un.</div>` : ""}
-              ${q > 1 ? `<div style="font-size:10px;color:#A0A0B0;margin-top:1px;font-weight:700">× ${q} unidades</div>` : ""}
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:14px;font-weight:900;color:#FF5500">${tot > 0 ? fmt(tot) : "—"}</div>
-              ${q > 1 ? `<div style="font-size:9px;color:#8899aa">unit. ${fmt(v)}</div>` : ""}
-            </div>
-          </div>`;
-        }).join("");
-      } else throw 0;
-    } catch {
-      itensHtml = itensRaw.split("|").map(s => {
-        const n = s.trim();
-        const img = _getProdImg(n);
-        const thumbHtml = img ? `<img src="${img}?_nc=1" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` : "📦";
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-          <div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,.04);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px">${thumbHtml}</div>
-          <div style="font-size:12px;color:#FFFFFF;font-weight:600">${n}</div>
-        </div>`;
-      }).join("");
+      const parsed = JSON.parse(itensRaw);
+      if (Array.isArray(parsed) && parsed.length) itensArr = parsed;
+    } catch(e) {
+      itensArr = itensRaw.split("|").map(s => s.trim()).filter(Boolean).map(s => {
+        const mQty = s.match(/^(.+?)\s*x\s*(\d+)\s*$/i);
+        return mQty ? { nome: mQty[1].trim(), qtd: Number(mQty[2]), valor: 0 } : { nome: s, qtd: 1, valor: 0 };
+      });
     }
+  }
+  let itensHtml = "";
+  if (itensArr.length) {
+    itensHtml = itensArr.map(i => {
+      const n = (i.nome || i.name || "?") + (i.variacao ? ` (${i.variacao})` : "");
+      const q = Number(i.qtd || i.qty || 1);
+      const v = Number(i.valor || i.preco || 0);
+      const tot = v * q;
+      const img = _getProdImg(i.nome || i.name);
+      const thumb = img
+        ? `<img src="${img}?_nc=1" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : "";
+      const fb = `<div style="display:${img ? "none" : "flex"};align-items:center;justify-content:center;height:100%;font-size:24px;color:#8899aa">📦</div>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <div style="width:72px;height:72px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow:hidden">${thumb}${fb}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:#FFFFFF;font-weight:700;line-height:1.35">${n}</div>
+          ${v > 0 ? `<div style="font-size:10px;color:#8899aa;margin-top:3px">${fmt(v)} × ${q} un.</div>` : `<div style="font-size:10px;color:#8899aa;margin-top:3px">${q} un.</div>`}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:14px;font-weight:900;color:#FF5500">${tot > 0 ? fmt(tot) : "—"}</div>
+          ${q > 1 && v > 0 ? `<div style="font-size:9px;color:#8899aa">unit. ${fmt(v)}</div>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  } else {
+    itensHtml = '<div style="padding:12px;color:#f44336;font-size:12px;font-weight:600">⚠️ Nenhum item registrado neste pedido</div>';
   }
 
   // ── Saldo / Histórico ──
@@ -1876,10 +1892,11 @@ async function showRecibo(pedId) {
   const abatimento = Math.max(0, (sub + totalJuros) - total - totalPago + saldo);
 
   const totalParc = qtdParc || (nPagas + nPend) || 0;
+  const valorParcelaRc = totalParc > 0 ? total / totalParc : 0;
   const mkBxRow = (b, isPend, num) => {
-    const vl = Number(isPend ? (b["Saldo_Restante"] || b["Valor_Original"] || 0) : (b["Valor_Final_Recebido"] || 0));
+    const vl = Number(isPend ? (valorParcelaRc || b["Saldo_Restante"] || b["Valor_Original"] || 0) : (b["Valor_Final_Recebido"] || 0));
     const st = b["Status_Pagamento"] || "";
-    const dt = isPend ? (b["Proxima_Vencimento"] || "—") : (b["Data_Baixa_Efetiva"] || "—");
+    const dt = _rcDate(isPend ? b["Proxima_Vencimento"] : b["Data_Baixa_Efetiva"]);
     const taxa = Number(b["Taxa_Aplicada_RS"] || 0);
     const isAtrasado = st.includes("Atraso");
     const cor = isPend ? "#f44336" : (isAtrasado ? "#ffb74d" : st.includes("Antecip") ? "#ab47bc" : "#FF5500");
@@ -1924,14 +1941,14 @@ async function showRecibo(pedId) {
     wppLines.push("", "─────────────────────", `💳 *Pagamentos (${nPagas}/${totalParc || nPagas + nPend}):*`);
     pagas.forEach((b,i) => {
       const taxa = Number(b["Taxa_Aplicada_RS"]||0);
-      wppLines.push(`✅ ${parcLabel(i+1)} — ${b["Data_Baixa_Efetiva"]||"—"} — ${fmt(Number(b["Valor_Final_Recebido"]||0))}${taxa > 0 ? ` (c/ juros ${fmt(taxa)})` : ""}`);
+      wppLines.push(`✅ ${parcLabel(i+1)} — ${_rcDate(b["Data_Baixa_Efetiva"])} — ${fmt(Number(b["Valor_Final_Recebido"]||0))}${taxa > 0 ? ` (c/ juros ${fmt(taxa)})` : ""}`);
     });
-    pendentes.forEach((b,i) => wppLines.push(`⏳ ${parcLabel(nPagas+i+1)} — Vence ${b["Proxima_Vencimento"]||"—"} — ${fmt(Number(b["Saldo_Restante"]||b["Valor_Original"]||0))}`));
+    pendentes.forEach((b,i) => wppLines.push(`⏳ ${parcLabel(nPagas+i+1)} — Vence ${_rcDate(b["Proxima_Vencimento"])} — ${fmt(Number(valorParcelaRc || b["Saldo_Restante"]||b["Valor_Original"]||0))}`));
     wppLines.push("", `✅ *Total pago: ${fmt(totalPago)}*`);
     if (totalJuros > 0) wppLines.push(`⚠️ Juros totais: ${fmt(totalJuros)}`);
     wppLines.push(quitado ? "🎉 *QUITADO ✅*" : `⚠️ *Saldo devedor: ${fmt(saldo)}*`);
   }
-  wppLines.push("", "─────────────────────", `_${_storeName} — Obrigado pela preferência 🙏_`);
+  wppLines.push("", "─────────────────────", `_${_fraseAgradecimento(quitado)}_`, _SIG.trim());
   const wppMsg = encodeURIComponent(wppLines.filter(l => l !== null).join("\n"));
 
   // ── Render ──
@@ -1940,10 +1957,45 @@ async function showRecibo(pedId) {
     <button class="rc-btn rc-btn-img" id="rcImgBtn" onclick="gerarImagemRecibo()">📸 Salvar Imagem</button>
     <button class="rc-btn rc-btn-cls" onclick="document.getElementById('receiptModal').classList.remove('open')">✕ Fechar</button>`;
 
+  const _msgMotivRc = quitado
+    ? `🎉 Pedido totalmente quitado! Obrigado ${String(nome).split(" ")[0]}!`
+    : pct >= 90 ? `🔥 Quase lá! Só mais ${totalParc - nPagas} parcela${(totalParc-nPagas)>1?"s":""}`
+    : pct >= 50 ? `🎯 Na metade! Faltam ${totalParc - nPagas} parcela${(totalParc-nPagas)>1?"s":""}`
+    : pct >= 25 ? `💪 Você está indo bem! ${nPagas} de ${totalParc} pagas`
+    : nPagas > 0 ? `👏 Primeira parcela paga! Continue firme`
+    : totalParc > 1 ? `📅 ${totalParc} parcelas a pagar` : "";
+
+  let _proxPagHtml = "";
+  if (!quitado && pendentes.length) {
+    const _prox = pendentes[0];
+    const _dtVenc = String(_prox["Proxima_Vencimento"] || "").split("T")[0];
+    let _diasAte = null;
+    try { const _d = new Date(_dtVenc); if (!isNaN(_d)) _diasAte = Math.ceil((_d - new Date()) / 86400000); } catch(e) {}
+    const _dtBR = _dtVenc.split("-").reverse().join("/");
+    const _vlProx = valorParcelaRc || Number(_prox["Saldo_Restante"] || _prox["Valor_Original"] || 0);
+    const _urg = _diasAte === null ? "" : _diasAte < 0 ? `⚠️ Atrasado há ${Math.abs(_diasAte)}d` : _diasAte === 0 ? "🔴 Vence HOJE" : _diasAte <= 3 ? `🟠 Vence em ${_diasAte}d` : _diasAte <= 7 ? `🟡 Vence em ${_diasAte}d` : `🟢 Vence em ${_diasAte}d`;
+    const _corU = _diasAte === null ? "#FF7A35" : _diasAte < 0 ? "#f44336" : _diasAte <= 3 ? "#ff8a65" : _diasAte <= 7 ? "#ffb74d" : "#FF5500";
+    _proxPagHtml = `<div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:linear-gradient(135deg,rgba(255,122,53,.08),rgba(255,85,0,.04))">
+      <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📅 PRÓXIMO PAGAMENTO</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:18px;font-weight:900;color:${_corU}">${fmt(_vlProx)}</div>
+          <div style="font-size:10px;color:#8899aa;margin-top:2px">${_dtBR || "—"}</div>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:${_corU};text-align:right">${_urg}</div>
+      </div>
+    </div>`;
+  }
+
+  const _badgeHead = quitado
+    ? `<div style="margin-top:8px;font-size:10px;font-weight:800;color:#FF5500;background:rgba(255,85,0,.12);border:1px solid rgba(255,85,0,.35);border-radius:20px;padding:4px 12px;display:inline-block">🎉 PEDIDO QUITADO</div>`
+    : (nPagas >= 3 ? `<div style="margin-top:8px;font-size:10px;font-weight:800;color:#ffd54f;background:rgba(255,213,79,.12);border:1px solid rgba(255,213,79,.35);border-radius:20px;padding:4px 12px;display:inline-block">🏅 CLIENTE FIEL</div>` : "");
+
   document.getElementById("rcCard").innerHTML = `
     <div class="rc-header">
       <div class="rc-store">🏪 ${_storeName}</div>
       <div class="rc-sub">RECIBO DE VENDA  •  #${id}</div>
+      ${_badgeHead}
     </div>
 
     <div style="padding:12px 16px;border-bottom:1px solid #1a2840">
@@ -1954,17 +2006,17 @@ async function showRecibo(pedId) {
           ${enderecoFmt ? `<div style="font-size:10px;color:#8899aa;margin-top:2px">📍 ${enderecoFmt}</div>` : ""}
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(0,188,212,.15);color:#A0A0B0;border:1px solid rgba(0,188,212,.3)">${pag}</div>
+          <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(160,160,176,.15);color:#A0A0B0;border:1px solid rgba(160,160,176,.3)">${pag}</div>
           <div style="font-size:10px;color:#8899aa;margin-top:3px">📅 ${dtPed}</div>
         </div>
       </div>
       ${obs ? `<div style="font-size:10px;color:#8899aa;margin-top:6px;padding:5px 8px;background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid rgba(255,255,255,.1)">📝 ${obs}</div>` : ""}
     </div>
 
-    ${itensHtml ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840">
-      <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🛒 ITENS DO PEDIDO</div>
+    <div style="padding:12px 16px;border-bottom:1px solid #1a2840">
+      <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🛒 ITENS DO PEDIDO${itensArr.length > 1 ? ` (${itensArr.length})` : ""}</div>
       ${itensHtml}
-    </div>` : ""}
+    </div>
 
     <div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:rgba(6,12,24,.6)">
       <div style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💰 VALORES</div>
@@ -1978,7 +2030,7 @@ async function showRecibo(pedId) {
       </div>
     </div>
 
-    <div style="padding:12px 16px;border-bottom:1px solid #1a2840">
+    ${(nPagas + nPend) > 0 ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px">💳 HISTÓRICO DE PAGAMENTOS</span>
         <span style="font-size:11px;font-weight:800;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:8px;color:${quitado?"#FF5500":"#ffb74d"}">${pct}%</span>
@@ -1988,8 +2040,7 @@ async function showRecibo(pedId) {
       </div>
       ${bxHtml}
     </div>
-
-    <div style="padding:14px 16px;background:${quitado?"rgba(0,230,118,.1)":"rgba(244,67,54,.08)"};border-bottom:1px solid ${quitado?"rgba(0,230,118,.2)":"rgba(244,67,54,.2)"}">
+    <div style="padding:14px 16px;background:${quitado?"rgba(255,85,0,.1)":"rgba(244,67,54,.08)"};border-bottom:1px solid ${quitado?"rgba(255,85,0,.2)":"rgba(244,67,54,.2)"}">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-size:10px;color:#8899aa;margin-bottom:3px">✅ Total pago</div>
@@ -2002,9 +2053,12 @@ async function showRecibo(pedId) {
             : `<div><div style="font-size:10px;color:#8899aa;margin-bottom:3px">⚠️ Saldo devedor</div><div style="font-size:22px;font-weight:900;color:#f44336;font-family:'Syne',sans-serif">${fmt(saldo)}</div></div>`}
         </div>
       </div>
+      ${_msgMotivRc ? `<div style="margin-top:10px;font-size:11px;font-weight:700;color:${quitado?"#FF5500":"#FF7A35"};text-align:center;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:8px">${_msgMotivRc}</div>` : ""}
     </div>
+    ${_proxPagHtml}` : ""}
 
     <div style="padding:12px 16px;text-align:center;background:rgba(0,0,0,.2)">
+      <div style="font-size:11px;font-weight:700;color:#FFFFFF;margin-bottom:4px">${String(nome).split(" ")[0]}, conte sempre com a gente! 🧡</div>
       <div style="font-size:9px;color:#8899aa;letter-spacing:.5px;text-transform:uppercase">${_storeName} · Obrigado pela preferência 🙏</div>
       <div style="font-size:8px;color:rgba(136,153,170,.5);margin-top:3px">${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</div>
     </div>`;
