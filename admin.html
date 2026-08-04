@@ -155,6 +155,9 @@
       display: flex; align-items: center; justify-content: center; padding: 16px;
     }
     #modal-cliente.hidden, #modal-importar.hidden, #modal-parcelas.hidden, #modal-op-senha.hidden { display: none; }
+    /* G19: Margem em Lote — display sempre em regra CSS, nunca inline, senão .hidden não some (ver errors-to-avoid E16) */
+    #modal-margem { display: flex; }
+    #modal-margem.hidden { display: none; }
     #modal-cliente .npbox, #modal-importar .npbox, #modal-parcelas .npbox {
       width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
     }
