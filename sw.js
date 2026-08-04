@@ -1,6 +1,6 @@
 // IMPORTANTE: bumpar esta versão A CADA deploy que mude HTML/config.js.
 // Sem o bump, o `activate` não limpa o cache antigo e o usuário fica preso na versão velha.
-const CACHE = 'orahbuy-v5';
+const CACHE = 'orahbuy-v6';
 const SHELL = ['./index.html', './admin.html', './gestao_unificada.html', './config.js', './manifest.json'];
 
 self.addEventListener('install', e => {

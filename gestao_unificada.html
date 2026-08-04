@@ -660,6 +660,17 @@ function apiGet(action, params = {}) {
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   return fetch(url.toString()).then(r => r.json());
 }
+// Escrita com payload grande (editar pedido leva endereço, observações, itens) vai por POST:
+// no GET tudo isso vira query string e estoura o limite de tamanho da URL, falhando calado.
+async function apiPost(action, params = {}) {
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ action }, params)),
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
 
 // ── FORMATADORES ──────────────────────────────────────────────────
 function fmt(v) {
@@ -1728,6 +1739,10 @@ function openEditPedido(id) {
       <div style="flex:2;min-width:140px"><div class="bx-lbl">Fornecedor</div><input class="bx-inp" id="ep-forn" value="${String(p["Fornecedor_Selecionado"]||"").replace(/"/g,"&quot;")}"></div>
       <div style="flex:1;min-width:80px"><div class="bx-lbl">Custo R$</div><input class="bx-inp" id="ep-custo" type="number" step="0.01" value="${p["Custo_Lote"]||""}"></div>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <div style="flex:1;min-width:120px"><div class="bx-lbl">📦 Nº de parcelas</div><input class="bx-inp" id="ep-parcelas" type="number" min="1" max="60" value="${Number(p["Qtd_Parcelas"]||1)}"></div>
+      <div style="flex:2;min-width:150px;display:flex;align-items:flex-end"><div style="font-size:10px;color:var(--muted);line-height:1.35">Recalcula o valor da parcela no recibo. O histórico de pagamentos é mantido.</div></div>
+    </div>
     <div style="margin-top:6px"><div class="bx-lbl">Observações</div><textarea class="bx-inp" id="ep-obs" style="height:52px;resize:vertical">${p["Observações"]||""}</textarea></div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="bx-confirm" style="flex:1" onclick="salvarEditPedido('${id}')">💾 Salvar Alterações</button>
@@ -1752,12 +1767,13 @@ async function salvarEditPedido(id) {
     fornecedor:    document.getElementById("ep-forn")?.value.trim() || "",
     custoLote:     document.getElementById("ep-custo")?.value || "",
     endereco:      document.getElementById("ep-end")?.value.trim() || "",
-    cep:           document.getElementById("ep-cep")?.value.trim() || ""
+    cep:           document.getElementById("ep-cep")?.value.trim() || "",
+    qtdParcelas:   Math.max(1, parseInt(document.getElementById("ep-parcelas")?.value) || 1)
   };
   const btn = document.querySelector("#editPedPanel .bx-confirm");
   if (btn) { btn.disabled = true; btn.textContent = "⏳ Salvando..."; }
   try {
-    const res = await apiGet("editarPedido", params);
+    const res = await apiPost("editarPedido", params);
     if (res.ok) {
       // Atualiza cache local
       const idx = allPeds.findIndex(x => String(x["ID Pedido"]) === String(id));
@@ -1772,7 +1788,8 @@ async function salvarEditPedido(id) {
           "Fornecedor_Selecionado": params.fornecedor,
           "Custo_Lote": params.custoLote,
           "Endereco": params.endereco,
-          "CEP": params.cep
+          "CEP": params.cep,
+          "Qtd_Parcelas": params.qtdParcelas
         };
         currentPed = allPeds[idx];
       }
