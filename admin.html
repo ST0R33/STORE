@@ -6803,9 +6803,37 @@
         </div>`;
       };
 
+      // Pedido parcelado sem nenhuma baixa lancada ainda: projeta as parcelas em vez de deixar
+      // o recibo vazio (mesma correcao aplicada no gestao_unificada).
+      const _intervAdmin = Number(pedObj["Intervalo_Dias"] || 30) || 30;
+      const _vencAdmin = _rcDate(pedObj["Data_Vencimento"] || "");
+      const _dtParcAdmin = function(num) {
+        const pts = String(_vencAdmin || "").split("/");
+        if (pts.length !== 3) return "";
+        const d = new Date(Number(pts[2]), Number(pts[1]) - 1, Number(pts[0]));
+        if (isNaN(d.getTime())) return "";
+        d.setDate(d.getDate() + _intervAdmin * (num - 1));
+        return String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
+      };
+      const previstasAdmin = (!historico.length && totalParcAdmin > 0)
+        ? Array.from({ length: totalParcAdmin }, function(_, i) {
+            const num = i + 1, dt = _dtParcAdmin(num);
+            return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+              <div style="width:20px;height:20px;border-radius:50%;background:#f4433620;border:1.5px solid #f4433655;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f44336;flex-shrink:0">${num}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;color:#f44336">⏳ ${dt ? "Vence: " + dt : "Vencimento a definir"}</div>
+                <div style="font-size:10px;color:#8899aa">${totalParcAdmin > 1 ? "Parcela " + num + "/" + totalParcAdmin : "Pagamento"} · aguardando lançamento</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:13px;font-weight:800;color:#f44336">${fmt(valorParcelaAdmin)}</div>
+                <div style="font-size:9px;color:#8899aa">a pagar</div>
+              </div>
+            </div>`;
+          }).join("")
+        : "";
       const baixasHtml = historico.length
         ? [...pagas.map((b,i) => mkBaixaRow(b, false, i+1)), ...pendentes.map((b,i) => mkBaixaRow(b, true, nPagas+i+1))].join("")
-        : `<div style="font-size:12px;color:#8899aa;padding:6px 0">Nenhum pagamento registrado</div>`;
+        : (previstasAdmin || `<div style="font-size:12px;color:#8899aa;padding:6px 0">Nenhum pagamento registrado</div>`);
 
       // WPP message
       const wppMsgRaw = [
@@ -6910,16 +6938,18 @@
               <div style="font-size:11px;font-weight:700;color:${cor2};text-align:center;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:6px">${msgMotiv}</div>
             </div>`;
           })() : ""}
-          ${!quitado && pendentes.length ? (() => {
-            const prox = pendentes[0];
-            const dtVenc = String(prox["Proxima_Vencimento"] || "").split("T")[0];
+          ${!quitado && (pendentes.length || (!historico.length && totalParcAdmin > 0)) ? (() => {
+            const prox = pendentes[0] || null;
+            const dtVenc = prox
+              ? String(prox["Proxima_Vencimento"] || "").split("T")[0]
+              : (_dtParcAdmin(1) || "").split("/").reverse().join("-");
             let diasAte = null;
             try {
               const d = new Date(dtVenc);
               if (!isNaN(d)) diasAte = Math.ceil((d - new Date()) / 86400000);
             } catch(e) {}
             const dtBR = dtVenc.split("-").reverse().join("/");
-            const vlProx = valorParcelaAdmin || Number(prox["Saldo_Restante"] || prox["Valor_Original"] || 0);
+            const vlProx = valorParcelaAdmin || Number((prox && (prox["Saldo_Restante"] || prox["Valor_Original"])) || 0);
             const urgencia = diasAte === null ? "" : diasAte < 0 ? `⚠️ Atrasado há ${Math.abs(diasAte)}d` : diasAte === 0 ? "🔴 Vence HOJE" : diasAte <= 3 ? `🟠 Vence em ${diasAte}d` : diasAte <= 7 ? `🟡 Vence em ${diasAte}d` : `🟢 Vence em ${diasAte}d`;
             const corU = diasAte === null ? "#FF7A35" : diasAte < 0 ? "#f44336" : diasAte <= 3 ? "#ff8a65" : diasAte <= 7 ? "#ffb74d" : "#FF5500";
             return `<div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:linear-gradient(135deg,rgba(255,122,53,.08),rgba(255,85,0,.04))">
@@ -6927,7 +6957,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center">
                 <div>
                   <div style="font-size:18px;font-weight:900;color:${corU}">${fmt(vlProx)}</div>
-                  <div style="font-size:10px;color:#8899aa;margin-top:2px">${dtBR || "—"}</div>
+                  <div style="font-size:10px;color:#8899aa;margin-top:2px">${dtBR || "⚠️ Defina o vencimento no pedido"}</div>
                 </div>
                 <div style="font-size:11px;font-weight:800;color:${corU};text-align:right">${urgencia}</div>
               </div>

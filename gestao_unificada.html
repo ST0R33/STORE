@@ -1912,6 +1912,35 @@ async function showRecibo(pedId) {
 
   const totalParc = qtdParc || (nPagas + nPend) || 0;
   const valorParcelaRc = totalParc > 0 ? total / totalParc : 0;
+  // Pedido parcelado que ainda nao teve nenhuma baixa lancada: projeta as parcelas a partir de
+  // Qtd_Parcelas + Data_Vencimento + Intervalo_Dias. Sem isso o recibo de um pedido novo de 2x
+  // nao mostrava parcela nenhuma — sumia a secao inteira.
+  const _intervDias = Number(p["Intervalo_Dias"] || 30) || 30;
+  const _vencBase = _rcDate(p["Data_Vencimento"] || "");
+  function _dtParcelaPrevista(num) {
+    const pts = String(_vencBase || "").split("/");
+    if (pts.length !== 3) return "";
+    const d = new Date(Number(pts[2]), Number(pts[1]) - 1, Number(pts[0]));
+    if (isNaN(d.getTime())) return "";
+    d.setDate(d.getDate() + _intervDias * (num - 1));
+    return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+  }
+  const semLancamento = (nPagas + nPend) === 0 && totalParc > 0;
+  const previstasHtml = semLancamento ? Array.from({ length: totalParc }, function(_, i) {
+    const num = i + 1;
+    const dt = _dtParcelaPrevista(num);
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="min-width:28px;height:22px;border-radius:6px;background:#f4433622;border:1.5px solid #f4433655;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f44336;flex-shrink:0;padding:0 3px">${totalParc > 1 ? num + "/" + totalParc : num}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;color:#f44336">⏳ ${dt ? "Vence " + dt : "Vencimento a definir"}</div>
+        <div style="font-size:10px;color:#8899aa;margin-top:1px">${totalParc > 1 ? "Parc. " + num + "/" + totalParc : "Pagamento"} · Aguardando lançamento</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:800;color:#f44336">${fmt(valorParcelaRc)}</div>
+        <div style="font-size:9px;color:#8899aa">a pagar</div>
+      </div>
+    </div>`;
+  }).join("") : "";
   const mkBxRow = (b, isPend, num) => {
     const vl = Number(isPend ? (valorParcelaRc || b["Saldo_Restante"] || b["Valor_Original"] || 0) : (b["Valor_Final_Recebido"] || 0));
     const st = b["Status_Pagamento"] || "";
@@ -1934,8 +1963,9 @@ async function showRecibo(pedId) {
       </div>
     </div>`;
   };
-  const bxHtml = [...pagas.map((b,i)=>mkBxRow(b,false,i+1)), ...pendentes.map((b,i)=>mkBxRow(b,true,nPagas+i+1))].join("") ||
-    `<div style="font-size:12px;color:#8899aa;padding:8px 0;text-align:center">Sem histórico de pagamentos</div>`;
+  const bxHtml = [...pagas.map((b,i)=>mkBxRow(b,false,i+1)), ...pendentes.map((b,i)=>mkBxRow(b,true,nPagas+i+1))].join("")
+    || previstasHtml
+    || `<div style="font-size:12px;color:#8899aa;padding:8px 0;text-align:center">Sem histórico de pagamentos</div>`;
 
   // ── WPP mensagem ──
   const wppLines = [
@@ -1985,13 +2015,16 @@ async function showRecibo(pedId) {
     : totalParc > 1 ? `📅 ${totalParc} parcelas a pagar` : "";
 
   let _proxPagHtml = "";
-  if (!quitado && pendentes.length) {
-    const _prox = pendentes[0];
-    const _dtVenc = String(_prox["Proxima_Vencimento"] || "").split("T")[0];
+  if (!quitado && (pendentes.length || semLancamento)) {
+    const _prox = pendentes[0] || null;
+    // Sem baixa pendente lancada, usa a 1a parcela projetada (dd/mm/aaaa -> aaaa-mm-dd)
+    const _dtVenc = _prox
+      ? String(_prox["Proxima_Vencimento"] || "").split("T")[0]
+      : (_dtParcelaPrevista(1) || "").split("/").reverse().join("-");
     let _diasAte = null;
     try { const _d = new Date(_dtVenc); if (!isNaN(_d)) _diasAte = Math.ceil((_d - new Date()) / 86400000); } catch(e) {}
     const _dtBR = _dtVenc.split("-").reverse().join("/");
-    const _vlProx = valorParcelaRc || Number(_prox["Saldo_Restante"] || _prox["Valor_Original"] || 0);
+    const _vlProx = valorParcelaRc || Number((_prox && (_prox["Saldo_Restante"] || _prox["Valor_Original"])) || 0);
     const _urg = _diasAte === null ? "" : _diasAte < 0 ? `⚠️ Atrasado há ${Math.abs(_diasAte)}d` : _diasAte === 0 ? "🔴 Vence HOJE" : _diasAte <= 3 ? `🟠 Vence em ${_diasAte}d` : _diasAte <= 7 ? `🟡 Vence em ${_diasAte}d` : `🟢 Vence em ${_diasAte}d`;
     const _corU = _diasAte === null ? "#FF7A35" : _diasAte < 0 ? "#f44336" : _diasAte <= 3 ? "#ff8a65" : _diasAte <= 7 ? "#ffb74d" : "#FF5500";
     _proxPagHtml = `<div style="padding:12px 16px;border-bottom:1px solid #1a2840;background:linear-gradient(135deg,rgba(255,122,53,.08),rgba(255,85,0,.04))">
@@ -1999,7 +2032,7 @@ async function showRecibo(pedId) {
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-size:18px;font-weight:900;color:${_corU}">${fmt(_vlProx)}</div>
-          <div style="font-size:10px;color:#8899aa;margin-top:2px">${_dtBR || "—"}</div>
+          <div style="font-size:10px;color:#8899aa;margin-top:2px">${_dtBR || "⚠️ Defina o vencimento no pedido"}</div>
         </div>
         <div style="font-size:11px;font-weight:800;color:${_corU};text-align:right">${_urg}</div>
       </div>
@@ -2049,7 +2082,18 @@ async function showRecibo(pedId) {
       </div>
     </div>
 
-    ${(nPagas + nPend) > 0 ? `<div style="padding:12px 16px;border-bottom:1px solid #1a2840">
+    ${((nPagas + nPend) > 0 || totalParc > 0) ? `${totalParc > 1 ? `<div style="padding:10px 16px;border-bottom:1px solid #1a2840;background:${quitado ? "rgba(255,85,0,.06)" : "rgba(255,122,53,.06)"}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px">📦 PARCELAS</span>
+        <span style="font-size:12px;font-weight:800;color:${quitado ? "#FF5500" : nPagas > 0 ? "#FF7A35" : "#ffb74d"}">${nPagas}/${totalParc} pagas${quitado ? " ✅" : (totalParc - nPagas) > 0 ? " · " + (totalParc - nPagas) + " restante" + ((totalParc - nPagas) > 1 ? "s" : "") : ""}</span>
+      </div>
+      <div style="display:flex;gap:3px;margin-bottom:6px">${Array.from({length: Math.min(totalParc, 12)}, (_, i) => `<div style="flex:1;height:8px;border-radius:2px;background:${i < nPagas ? "#FF5500" : i === nPagas ? (quitado ? "#FF5500" : "#ffb74d") : "rgba(255,255,255,.15)"}"></div>`).join("")}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px">
+        <span style="color:#8899aa">Valor da parcela: <b style="color:#FF7A35">${fmt(valorParcelaRc)}</b></span>
+        <span style="color:#8899aa">Pago: <b style="color:#FF5500">${pct}%</b></span>
+      </div>
+    </div>` : ""}
+    <div style="padding:12px 16px;border-bottom:1px solid #1a2840">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:9px;font-weight:800;color:#8899aa;text-transform:uppercase;letter-spacing:1px">💳 HISTÓRICO DE PAGAMENTOS</span>
         <span style="font-size:11px;font-weight:800;background:rgba(255,255,255,.07);padding:2px 8px;border-radius:8px;color:${quitado?"#FF5500":"#ffb74d"}">${pct}%</span>
