@@ -21,6 +21,8 @@ html.theme-light {
   --d4: #c0cbda; --d5: #b0bccc; --text: #1a2332;
   --muted: rgba(26,35,50,.55); --border: rgba(255,85,0,.18);
 }
+/* T1: .topbar/.bnav usavam rgba(4,9,15,...) fixo — virava barra quase preta no tema claro */
+html.theme-light .topbar, html.theme-light .bnav { background: rgba(242, 245, 249, .9); }
 .theme-toggle{display:flex;background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.28);border-radius:20px;padding:3px;gap:2px}
 .tt-btn{background:none;border:none;border-radius:16px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--muted);transition:background .18s,color .18s;line-height:1}
 .tt-btn.on{background:var(--g);color:#fff}
@@ -499,9 +501,12 @@ body{background:var(--dark);color:var(--text);font-family:var(--B);min-height:10
       </div>
 
       <!-- Busca -->
-      <div class="sch-wrap">
-        <span class="sch-ico">🔍</span>
-        <input id="schInp" type="text" placeholder="Buscar por ID, cliente, itens..." oninput="render()">
+      <div class="sch-wrap" style="display:flex;gap:6px;align-items:center">
+        <div style="position:relative;flex:1;display:flex;align-items:center">
+          <span class="sch-ico">🔍</span>
+          <input id="schInp" type="text" placeholder="Buscar por ID, cliente, itens..." oninput="render()" style="width:100%">
+        </div>
+        <button onclick="exportarPedidosCSV()" title="Exportar lista filtrada como CSV" style="background:var(--d3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer;white-space:nowrap">📊 CSV</button>
       </div>
 
       <!-- Lista de pedidos -->
@@ -595,20 +600,21 @@ body{background:var(--dark);color:var(--text);font-family:var(--B);min-height:10
 <script>
 // ── TEMA ─────────────────────────────────────────────────────────
 (function() {
-  let t = localStorage.getItem("gj_theme") || "cyberpunk";
-  if (t === "botafogo" || t === "gold") { t = "cyberpunk"; localStorage.setItem("gj_theme", t); }
+  // N7: sem tema salvo, respeita o esquema do SO na 1ª visita em vez de fixar "cyberpunk"
+  let t = localStorage.getItem("ob_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "cyberpunk");
+  if (t === "botafogo" || t === "gold") { t = "cyberpunk"; localStorage.setItem("ob_theme", t); }
   document.documentElement.className = t === "cyberpunk" ? "" : "theme-" + t;
 })();
 function applyGestaoTheme(t) {
   document.documentElement.className = t === "cyberpunk" ? "" : "theme-" + t;
-  localStorage.setItem("gj_theme", t);
+  localStorage.setItem("ob_theme", t);
   const d = document.getElementById("tt-dark");
   const l = document.getElementById("tt-light");
   if (d) d.classList.toggle("on", t === "cyberpunk");
   if (l) l.classList.toggle("on", t === "light");
 }
 document.addEventListener("DOMContentLoaded", function() {
-  const t = localStorage.getItem("gj_theme") || "cyberpunk";
+  const t = localStorage.getItem("ob_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "cyberpunk");
   const d = document.getElementById("tt-dark");
   const l = document.getElementById("tt-light");
   if (d) d.classList.toggle("on", t === "cyberpunk");
@@ -772,6 +778,50 @@ function setupStatusBar() {
   });
 }
 
+// N6: exporta a lista de pedidos JÁ FILTRADA (respeita busca/status/período ativos) como CSV.
+// BOM UTF-8 no início pra Excel abrir acentuação certa sem o usuário escolher encoding manual.
+function _csvCell(v) {
+  const s = String(v === undefined || v === null ? "" : v);
+  return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function _baixarCSV(filename, headers, rows) {
+  const linhas = [headers.map(_csvCell).join(";")].concat(rows.map(r => r.map(_csvCell).join(";")));
+  const csv = "﻿" + linhas.join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function _csvItensPedido(p) {
+  const raw = String(p["Itens"] || p["Itens (JSON)"] || "").trim();
+  if (!raw || raw === "[]") return "";
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) return arr.map(i => (i.nome || i.name || "?") + " x" + Number(i.qtd || i.qty || 1)).join(", ");
+  } catch (e) {}
+  return raw.split("|").map(s => s.trim()).filter(Boolean).join(", ");
+}
+function exportarPedidosCSV() {
+  const lista = getFiltered();
+  if (!lista.length) { toast("Nenhum pedido pra exportar com esse filtro", "err"); return; }
+  const headers = ["ID Pedido", "Data", "Cliente", "Telefone", "Itens", "Subtotal", "Total", "Forma Pagamento", "Status", "Vencimento", "Saldo Devedor"];
+  const rows = lista.map(p => {
+    const id = String(p["ID Pedido"] || "");
+    const total = Number(p["Total (R$)"] || 0);
+    const s = calcSaldo(id, total);
+    return [
+      id, String(p["Data/Hora"] || "").split(" ")[0], p["Nome Cliente"] || "", p["Telefone"] || "",
+      _csvItensPedido(p), Number(p["Subtotal (R$)"] || total).toFixed(2), total.toFixed(2),
+      p["Forma Pagamento"] || "", p["Status"] || "Pendente", p["Data_Vencimento"] || "",
+      (s.saldo || 0).toFixed(2)
+    ];
+  });
+  const hoje = new Date().toISOString().split("T")[0];
+  _baixarCSV(`orahbuy-pedidos-${hoje}.csv`, headers, rows);
+  toast(`✅ ${rows.length} pedido(s) exportado(s)`, "ok");
+}
 function getFiltered() {
   const q = (document.getElementById("schInp")?.value || "").toLowerCase();
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -1574,6 +1624,7 @@ function renderDetailActions() {
     </div>`;
   let html = statusPicker;
   html += `<button class="da" style="background:rgba(0,188,212,.1);border:1px solid rgba(0,188,212,.3);color:var(--c)" onclick="openEditPedido('${id}')">✏️ Editar Pedido</button>`;
+  html += `<button class="da" style="background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.3);color:var(--g)" onclick="npCopiarPedido('${id}')">🔁 Copiar como Novo Pedido</button>`;
   html += `<button class="da da-rec" onclick="showRecibo('${id}')">🧾 Recibo</button>`;
   if (tel) html += `<button class="da da-wpp" onclick="window.open('https://wa.me/55${tel}','_blank')">💬 WhatsApp</button>`;
   html += `<button class="da" style="background:rgba(244,67,54,.1);border:1px solid rgba(244,67,54,.3);color:var(--r);margin-top:4px" onclick="confirmarExcluirPedido('${id}')">🗑️ Excluir Pedido</button>`;
@@ -2381,6 +2432,34 @@ function npCalcTotal() {
   const t = document.getElementById("npTotalDisp");
   if (d) d.textContent = fmt(sub);
   if (t) t.textContent = fmt(total);
+}
+// N9: parser de itens compartilhado com o export CSV, no formato {nome,qtd,valor} que npItems espera
+function _npParseItensPedido(p) {
+  const raw = String(p["Itens"] || p["Itens (JSON)"] || "").trim();
+  if (!raw || raw === "[]") return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) return arr.map(i => ({ nome: i.nome || i.name || "?", qtd: Number(i.qtd || i.qty || 1), valor: Number(i.valor || i.preco || 0) }));
+  } catch (e) {}
+  return raw.split("|").filter(Boolean).map(s => {
+    const m = s.trim().match(/^(.+?)\s+x(\d+)$/);
+    return m ? { nome: m[1].trim(), qtd: Number(m[2]), valor: 0 } : { nome: s.trim(), qtd: 1, valor: 0 };
+  });
+}
+// N9: duplica um pedido existente como base pra um novo — abre o painel já preenchido
+// com cliente+itens, dono só revisa forma de pagamento/vencimento e confirma
+function npCopiarPedido(id) {
+  const p = allPeds.find(x => String(x["ID Pedido"]) === String(id));
+  if (!p) { toast("Pedido não encontrado", "err"); return; }
+  const panel = document.getElementById("npPanel");
+  if (!panel || panel.style.display === "none" || !panel.style.display) toggleNovoPedido();
+  const tel = String(p["Telefone"] || "").replace(/\D/g, "");
+  npSelectCliente(p["Nome Cliente"] || "", tel, p["Endereco"] || p["Endereço"] || "", p["CEP"] || "");
+  npItems = _npParseItensPedido(p);
+  npRenderItems();
+  npCalcTotal();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  toast("Pedido copiado — revise e confirme 🔁", "ok");
 }
 async function npSubmit() {
   const nome = document.getElementById("npNome").value.trim();

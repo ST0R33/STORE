@@ -41,6 +41,8 @@
     html.theme-light .an-card,
     html.theme-light .fin-card,
     html.theme-light .mkt-ctrl { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+    /* T1: header/.bnav usavam rgba(4,9,15,...) fixo — virava barra quase preta no tema claro */
+    html.theme-light header, html.theme-light .bnav { background: rgba(245, 245, 247, .93); }
 
     .theme-toggle {
       display: flex; background: rgba(255,85,0,.1);
@@ -3032,8 +3034,10 @@
           <option>Ativo</option>
           <option>Inativo</option>
           <option value="__sem_cat__">⚠️ Sem Categoria</option>
+          <option value="__sem_custo__">💰 Sem Custo</option>
         </select>
         <span id="inativeCnt"></span>
+        <button class="addbtn" style="background:var(--d3);color:var(--fg);border-color:var(--border)" onclick="openMargemLoteModal()">🧮 Margem em Lote</button>
         <button class="addbtn" onclick="openModal()">+ Produto</button>
       </div>
       <div id="nocatAlert" onclick="openNoCatModal()">
@@ -3051,13 +3055,45 @@
       </div>
     </div>
 
+    <!-- MARGEM EM LOTE -->
+    <div id="modal-margem" class="hidden" style="position:fixed;inset:0;z-index:1200;background:rgba(4,9,15,.88);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeMargemLoteModal()">
+      <div style="width:100%;max-width:640px;max-height:90vh;overflow-y:auto;background:var(--d2);border:1px solid var(--border);border-radius:16px;padding:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="font-family:var(--H);font-weight:800;font-size:16px">🧮 Definir Margem em Lote</div>
+          <button onclick="closeMargemLoteModal()" style="background:rgba(244,67,54,.15);border:1px solid rgba(244,67,54,.3);color:var(--r);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Selecione os produtos, defina a margem % e o preço de venda é recalculado a partir do custo cadastrado. Produto sem custo cadastrado é ignorado (não é alterado) — o filtro "💰 Sem Custo" na lista de Produtos ajuda a achar e corrigir.</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <input class="fi" id="margemSearch" placeholder="🔍 Buscar produto..." style="flex:2;min-width:140px;padding:7px 10px;font-size:12px" oninput="_margemPopulateGrid()">
+          <select class="fi" id="margemCat" style="flex:1;min-width:110px;padding:7px 10px;font-size:12px" onchange="_margemPopulateGrid()"><option value="">Todas categorias</option></select>
+          <button class="addbtn" style="font-size:11px;padding:7px 10px" onclick="_margemSelecionarTodosFiltrados()">Selecionar filtrados</button>
+          <button class="addbtn" style="font-size:11px;padding:7px 10px;background:var(--d3);color:var(--fg)" onclick="_margemLimparSel()">Limpar seleção</button>
+        </div>
+        <div id="margemGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;max-height:280px;overflow-y:auto;margin-bottom:12px;padding:2px"></div>
+        <div style="background:var(--d3);border-radius:12px;padding:12px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font-size:12px;font-weight:700" id="margemSelCount">0 selecionado(s)</div>
+            <div style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px">
+              <input class="fi" id="margemPct" type="number" step="1" placeholder="Ex: 100" style="padding:7px 10px;font-size:13px;width:90px" oninput="_margemPreview()">
+              <span style="font-size:12px;color:var(--muted)">% de margem sobre o custo</span>
+            </div>
+          </div>
+          <div id="margemPreviewBox" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+          <button class="savebtn" style="width:100%;margin-top:10px" onclick="_margemAplicar()">💾 Aplicar aos selecionados</button>
+        </div>
+      </div>
+    </div>
+
     <!-- PEDIDOS KANBAN -->
     <div class="page" id="page-ped">
       <button class="np-fab" onclick="openNovoPedido()">+ Novo Pedido</button>
       <!-- KPI strip -->
       <div id="pedKpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
-      <input class="kanban-search" id="kanbanSearch" type="text" placeholder="🔍 Buscar por ID, cliente, itens..."
-        oninput="onKanbanSearch(this.value)">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="kanban-search" id="kanbanSearch" type="text" placeholder="🔍 Buscar por ID, cliente, itens..."
+          oninput="onKanbanSearch(this.value)" style="flex:1">
+        <button onclick="exportarPedidosCSV()" title="Exportar lista filtrada como CSV" style="background:var(--d3);border:1px solid var(--border);color:var(--fg);border-radius:8px;padding:9px 10px;font-size:13px;cursor:pointer;white-space:nowrap">📊 CSV</button>
+      </div>
       <div class="kfilter-bar">
         <button class="kfilter-btn on" id="kf-todos" onclick="setKanbanFilter('todos',this)">Todos</button>
         <button class="kfilter-btn" id="kf-hoje" onclick="setKanbanFilter('hoje',this)">📅 Hoje</button>
@@ -3104,10 +3140,14 @@
         </div>
         <!-- Modo Estoque -->
         <div id="docEstoqueRow">
-          <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
-            <select class="fi" id="docProdSel" style="flex:1;margin-bottom:0"></select>
-            <input class="fi" id="docProdQty" type="number" value="1" min="1" style="width:64px;margin-bottom:0;text-align:center">
-            <button class="addbtn" onclick="addDocItem()" style="white-space:nowrap">+ Add</button>
+          <div style="position:relative;margin-bottom:10px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="fi" id="docProdSearch" placeholder="🔍 Buscar produto..." style="flex:1;margin-bottom:0" oninput="_docBuscaProduto(this.value)" autocomplete="off">
+              <input class="fi" id="docProdQty" type="number" value="1" min="1" style="width:64px;margin-bottom:0;text-align:center">
+              <button class="addbtn" onclick="addDocItem()" style="white-space:nowrap">+ Add</button>
+            </div>
+            <input type="hidden" id="docProdSelId">
+            <div id="docProdResults" style="display:none;position:absolute;top:100%;left:0;right:70px;z-index:50;background:var(--d2);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
           </div>
         </div>
         <div id="docItemsList">
@@ -3409,6 +3449,9 @@
         <button class="mais-item" onclick="closeMaisSheet();goPage('automacoes',document.getElementById('nav-mais'))">
           <span class="mais-ico">🤖</span>Automações
         </button>
+        <button class="mais-item" onclick="closeMaisSheet();goPage('destaques',document.getElementById('nav-mais'))">
+          <span class="mais-ico">⭐</span>Destaque Home
+        </button>
       </div>
     </div>
 
@@ -3432,6 +3475,19 @@
       </div>
       <div id="analyticsContent">
         <div class="empty" style="margin-top:40px">Acesse esta aba para carregar as métricas.</div>
+      </div>
+
+      <!-- N13: lucro por produto/categoria -->
+      <div style="margin-top:20px;background:var(--d2);border-radius:14px;padding:16px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-family:var(--H);font-weight:800;font-size:15px">💰 Lucro por Produto/Categoria</div>
+          <div style="display:flex;gap:4px;background:var(--d3);border-radius:8px;padding:2px">
+            <button class="lucro-tab on" data-t="categorias" onclick="_lucroSetTab('categorias',this)" style="border:none;background:var(--g);color:#fff;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer">Categorias</button>
+            <button class="lucro-tab" data-t="produtos" onclick="_lucroSetTab('produtos',this)" style="border:none;background:none;color:var(--muted);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer">Produtos</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Baseado no histórico de pedidos (exclui cancelados) × custo cadastrado em cada produto. ⚠️ = produto sem custo cadastrado, margem real pode ser menor</div>
+        <div id="lucroContent"><div class="empty">Acesse esta aba para carregar.</div></div>
       </div>
     </div>
 
@@ -3473,6 +3529,77 @@
       </div>
       <div id="cuponsList">
         <div class="empty">Acesse esta aba para carregar os cupons.</div>
+      </div>
+    </div>
+
+    <!-- DESTAQUES (G5.1/G21) -->
+    <div class="page" id="page-destaques">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:var(--H);font-weight:800;font-size:17px">⭐ Destaque da Home</div>
+        <button class="addbtn" onclick="openDestaqueForm()">+ Novo</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Mostra um produto, vídeo do YouTube ou texto promocional em destaque na home do site. Mais de um pode ficar ativo — o site alterna entre eles em carrossel.</div>
+      <div id="destaqueFormSection" style="display:none;background:var(--d2);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border)">
+        <div style="font-family:var(--H);font-weight:700;font-size:14px;margin-bottom:12px" id="destaqueFormTitle">Novo Destaque</div>
+        <input type="hidden" id="fDestId">
+        <div class="frow">
+          <div class="fg"><label class="fl">Tipo *</label>
+            <select class="fi" id="fDestTipo" onchange="_destTipoChanged()">
+              <option value="Produto">🛒 Produto</option>
+              <option value="Video">🎬 Vídeo (YouTube)</option>
+              <option value="Promo">📢 Promo / Texto</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Status</label>
+            <select class="fi" id="fDestAtivo">
+              <option value="Sim">Ativo</option>
+              <option value="Não">Inativo</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" id="fDestRefProdutoWrap">
+          <label class="fl">Produto</label>
+          <input class="fi" id="fDestRefBusca" placeholder="Buscar produto por nome..." oninput="_destBuscaProduto(this.value)">
+          <div id="fDestRefResultados" style="max-height:160px;overflow:auto;margin-top:4px"></div>
+          <input type="hidden" id="fDestRef">
+          <input type="hidden" id="fDestImagemIdx" value="0">
+          <div id="fDestRefSelecionado" style="font-size:12px;color:var(--c);margin-top:4px"></div>
+          <div id="fDestImgPicker" style="display:none;margin-top:8px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Escolha qual foto do produto usar no destaque:</div>
+            <div id="fDestImgOptions" style="display:flex;gap:8px"></div>
+          </div>
+        </div>
+        <div class="fg" id="fDestRefVideoWrap" style="display:none">
+          <label class="fl">Link do vídeo (YouTube)</label>
+          <input class="fi" id="fDestRefVideo" placeholder="https://www.youtube.com/watch?v=..." oninput="_destUpdatePreview()">
+        </div>
+        <div class="fg" id="fDestUploadWrap">
+          <label class="fl">Ou envie uma imagem/vídeo personalizado <span style="color:var(--muted);font-weight:400">(substitui a foto do produto / vira o banner da promo)</span></label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="addbtn" style="cursor:pointer;font-size:12px;padding:6px 12px;display:inline-block">📤 Enviar arquivo
+              <input type="file" id="fDestUploadInput" accept="image/*,video/*" style="display:none" onchange="_destUpload(this)">
+            </label>
+            <span id="fDestUploadStatus" style="font-size:11px;color:var(--muted)"></span>
+          </div>
+          <input type="hidden" id="fDestMediaCustom">
+          <div id="fDestUploadPreview" style="margin-top:8px"></div>
+        </div>
+        <div class="fg"><label class="fl">Texto (título/legenda exibida)</label><input class="fi" id="fDestTexto" placeholder="Ex: Confira o lançamento da semana!" oninput="_destUpdatePreview()"></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Início (opcional)</label><input class="fi" id="fDestDataIni" type="date"></div>
+          <div class="fg"><label class="fl">Fim (opcional)</label><input class="fi" id="fDestDataFim" type="date"></div>
+        </div>
+        <div class="fg">
+          <label class="fl">👁️ Preview (como vai aparecer na home do site)</label>
+          <div id="destPreviewBox" style="background:#04090f;border:1px solid var(--border);border-radius:14px;padding:14px;min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Preencha os campos acima pra ver o preview</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="savebtn" id="saveDestaqueBtn" onclick="salvarDestaqueAdmin()">💾 Salvar</button>
+          <button class="savebtn" style="background:var(--d3)" onclick="closeDestaqueForm()">Cancelar</button>
+        </div>
+      </div>
+      <div id="destaquesList">
+        <div class="empty">Acesse esta aba para carregar os destaques.</div>
       </div>
     </div>
 
@@ -3523,6 +3650,7 @@
         <div style="display:flex;gap:6px;align-items:center">
           <button class="addbtn" style="font-size:12px;padding:7px 12px" onclick="openClienteForm()">+ Novo</button>
           <button class="addbtn" style="font-size:12px;padding:7px 12px;background:rgba(0,188,212,.15);color:var(--c);border-color:var(--c)" onclick="openImportContatos()">📱 Importar</button>
+          <button class="addbtn" style="font-size:12px;padding:7px 12px;background:var(--d3);color:var(--fg);border-color:var(--border)" onclick="exportarClientesCSV()">📊 CSV</button>
         </div>
       </div>
       <input class="fi" id="clienteSearch" placeholder="🔍 Buscar por nome ou fone..." style="width:100%;padding:7px 12px;font-size:13px;margin-bottom:12px" oninput="filterClientes(this.value)">
@@ -4121,7 +4249,8 @@
   <script>
     // Init tema + sessão antes de qualquer render
     (function() {
-      let t = localStorage.getItem("ob_theme") || "cyberpunk";
+      // N7: sem tema salvo, respeita o esquema do SO na 1ª visita em vez de fixar "cyberpunk"
+      let t = localStorage.getItem("ob_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "cyberpunk");
       if (t === "botafogo") { t = "cyberpunk"; localStorage.setItem("ob_theme", t); }
       if (t !== "cyberpunk") document.documentElement.className = "theme-" + t;
 
@@ -4162,6 +4291,58 @@
     let TOKEN = "";
     let _loginTipo = "admin";
     let allProds = [], allPeds = [];
+    // N6: export CSV genérico — BOM UTF-8 pra Excel abrir acentuação certa sem escolher encoding
+    function _csvCell(v) {
+      const s = String(v === undefined || v === null ? "" : v);
+      return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    function _baixarCSV(filename, headers, rows) {
+      const linhas = [headers.map(_csvCell).join(";")].concat(rows.map(r => r.map(_csvCell).join(";")));
+      const csv = "﻿" + linhas.join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function _csvItensPedido(p) {
+      const raw = String(p["Itens"] || p["Itens (JSON)"] || "").trim();
+      if (!raw || raw === "[]") return "";
+      try {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr.map(i => (i.nome || i.name || "?") + " x" + Number(i.qtd || i.qty || 1)).join(", ");
+      } catch (e) {}
+      return raw.split("|").map(s => s.trim()).filter(Boolean).join(", ");
+    }
+    function exportarPedidosCSV() {
+      const filtered = getFilteredPeds();
+      const lista = pedTabAtivo === "todos" ? filtered : filtered.filter(p => p["Status"] === pedTabAtivo);
+      if (!lista.length) { toast("Nenhum pedido pra exportar com esse filtro", "err"); return; }
+      const headers = ["ID Pedido", "Data", "Cliente", "Telefone", "Itens", "Subtotal", "Total", "Forma Pagamento", "Status", "Vencimento", "Responsável"];
+      const rows = lista.map(p => [
+        p["ID Pedido"] || "", String(p["Data/Hora"] || "").split(" ")[0], p["Nome Cliente"] || "", p["Telefone"] || "",
+        _csvItensPedido(p), Number(p["Subtotal (R$)"] || p["Total (R$)"] || 0).toFixed(2), Number(p["Total (R$)"] || 0).toFixed(2),
+        p["Forma Pagamento"] || "", p["Status"] || "Pendente", p["Data_Vencimento"] || "", p["Responsavel"] || ""
+      ]);
+      const hoje = new Date().toISOString().split("T")[0];
+      _baixarCSV(`orahbuy-pedidos-${hoje}.csv`, headers, rows);
+      toast(`✅ ${rows.length} pedido(s) exportado(s)`);
+    }
+    function exportarClientesCSV() {
+      const lista = _lastClientesList && _lastClientesList.length ? _lastClientesList : [];
+      if (!lista.length) { toast("Nenhum cliente pra exportar", "err"); return; }
+      const headers = ["Nome", "Telefone", "Email", "Score", "Classificação", "Total Gasto", "Qtd Pedidos"];
+      const rows = lista.map(c => [
+        c.nome || c.Nome || "", c.telefone || c.WhatsApp || "", c.Email || c.email || "",
+        c.Score_Atual != null ? c.Score_Atual : "", c.Classificacao || "",
+        Number(c.totalGasto || c.Total_Gasto_RS || 0).toFixed(2),
+        c.pedidos ? c.pedidos.length : (Number(c.Compras_No_Prazo||0) + Number(c.Compras_Com_Atraso||0) + Number(c.Compras_Adiantadas||0))
+      ]);
+      const hoje = new Date().toISOString().split("T")[0];
+      _baixarCSV(`orahbuy-clientes-${hoje}.csv`, headers, rows);
+      toast(`✅ ${rows.length} cliente(s) exportado(s)`);
+    }
     let mediaUrls = [];
     let dragId = null;
     let pedOffset = 0;
@@ -4414,7 +4595,7 @@
     }
 
     // NAVIGATION
-    const MAIS_PAGES = ["doc", "mkt", "cat", "analytics", "cupons", "op", "clientes"];
+    const MAIS_PAGES = ["doc", "mkt", "cat", "analytics", "cupons", "op", "clientes", "destaques"];
     function goPage(id, btn) {
       // score foi unificado em clientes
       if (id === "score") { goPage("clientes", btn); return; }
@@ -4441,6 +4622,7 @@
       if (id === "cupons") loadCupons();
       if (id === "op") loadOperadores();
       if (id === "clientes") loadClientes();
+      if (id === "destaques") loadDestaques();
     }
 
     function openMaisSheet() {
@@ -4851,6 +5033,7 @@
         const mcat = !cat || cat === "__sem_cat__" || p["Categoria"] === cat;
         let mst;
         if (stat === "__sem_cat__") mst = !String(p["Categoria"] || "").trim();
+        else if (stat === "__sem_custo__") mst = !Number(p["Custo_Unitario"] || 0);
         else mst = !stat || p["Status"] === stat;
         return mq && mcat && mst;
       });
@@ -4873,6 +5056,116 @@
       </div>
     </div>`;
       }).join("");
+    }
+
+    // MARGEM EM LOTE — seleciona N produtos, define % de margem sobre o custo, recalcula
+    // "Preço (R$)" via atualizarProdutosBatch. Produto sem Custo_Unitario cadastrado é ignorado
+    // (fica desabilitado na grade) sem travar os demais.
+    let _margemSel = new Set();
+    function openMargemLoteModal() {
+      _margemSel.clear();
+      document.getElementById("margemPct").value = "";
+      document.getElementById("margemPreviewBox").innerHTML = "";
+      document.getElementById("margemSearch").value = "";
+      const catSel = document.getElementById("margemCat");
+      if (catSel) {
+        const cats = [...new Set(allProds.map(p => p["Categoria"]).filter(Boolean))].sort();
+        catSel.innerHTML = `<option value="">Todas categorias</option>` + cats.map(c => `<option value="${c}">${c}</option>`).join("");
+      }
+      _margemPopulateGrid();
+      document.getElementById("modal-margem").classList.remove("hidden");
+    }
+    function closeMargemLoteModal() {
+      document.getElementById("modal-margem").classList.add("hidden");
+    }
+    function _margemFiltrados() {
+      const q = (document.getElementById("margemSearch")?.value || "").toLowerCase().trim();
+      const catF = document.getElementById("margemCat")?.value || "";
+      return allProds.filter(p => {
+        if (p["Status"] === "Inativo") return false;
+        if (catF && p["Categoria"] !== catF) return false;
+        if (q && !(p["Nome do Produto"] || "").toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+    function _margemPopulateGrid() {
+      const grid = document.getElementById("margemGrid");
+      if (!grid) return;
+      const prods = _margemFiltrados();
+      if (!prods.length) { grid.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:16px 0">Nenhum produto encontrado</div>`; return; }
+      grid.innerHTML = prods.map(p => {
+        const id = String(p["ID"] || "");
+        const nome = p["Nome do Produto"] || "—";
+        const img = p["Imagem 1 (URL)"] || "";
+        const custo = Number(p["Custo_Unitario"] || 0);
+        const semCusto = !custo;
+        const sel = _margemSel.has(id);
+        const safeId = id.replace(/'/g, "\\'");
+        return `<div class="mkt-bulk-item${sel ? " sel" : ""}" data-mid="${id}" style="${semCusto ? "opacity:.4;cursor:not-allowed" : ""}" onclick="${semCusto ? "" : `_margemToggle('${safeId}', this)`}" title="${semCusto ? "Sem custo cadastrado — edite o produto pra habilitar" : ""}">
+          <div class="mkt-bulk-check">${sel ? "✓" : ""}</div>
+          ${img ? `<img src="${img}" loading="lazy" style="pointer-events:none">` : `<div class="mkt-bulk-noimg" style="pointer-events:none">📷</div>`}
+          <div class="mkt-bulk-name" style="pointer-events:none">${nome}</div>
+          <div class="mkt-bulk-price" style="pointer-events:none">${semCusto ? "⚠️ sem custo" : "Custo: " + fmt(custo)}</div>
+        </div>`;
+      }).join("");
+    }
+    function _margemToggle(id, el) {
+      if (_margemSel.has(id)) _margemSel.delete(id); else _margemSel.add(id);
+      el.classList.toggle("sel");
+      const chk = el.querySelector(".mkt-bulk-check");
+      if (chk) chk.textContent = _margemSel.has(id) ? "✓" : "";
+      _margemPreview();
+    }
+    function _margemSelecionarTodosFiltrados() {
+      _margemFiltrados().forEach(p => { if (Number(p["Custo_Unitario"] || 0)) _margemSel.add(String(p["ID"] || "")); });
+      _margemPopulateGrid();
+      _margemPreview();
+    }
+    function _margemLimparSel() {
+      _margemSel.clear();
+      _margemPopulateGrid();
+      _margemPreview();
+    }
+    function _margemPreview() {
+      const cnt = document.getElementById("margemSelCount");
+      if (cnt) cnt.textContent = _margemSel.size + " selecionado(s)";
+      const pct = Number(document.getElementById("margemPct")?.value);
+      const box = document.getElementById("margemPreviewBox");
+      if (!box) return;
+      if (!_margemSel.size || !pct) { box.innerHTML = ""; return; }
+      const selecionados = allProds.filter(p => _margemSel.has(String(p["ID"] || "")));
+      const linhas = selecionados.slice(0, 5).map(p => {
+        const custo = Number(p["Custo_Unitario"] || 0);
+        const novoPreco = custo * (1 + pct / 100);
+        return `<div>${p["Nome do Produto"]}: custo ${fmt(custo)} → novo preço ${fmt(novoPreco)}</div>`;
+      }).join("");
+      const resto = selecionados.length > 5 ? `<div>+ ${selecionados.length - 5} produto(s)...</div>` : "";
+      box.innerHTML = linhas + resto;
+    }
+    async function _margemAplicar() {
+      const pct = Number(document.getElementById("margemPct")?.value);
+      if (!_margemSel.size) { toast("Selecione ao menos 1 produto", "err"); return; }
+      if (!pct && pct !== 0) { toast("Informe a margem %", "err"); return; }
+      if (pct <= -100) { toast("Margem inválida", "err"); return; }
+      const selecionados = allProds.filter(p => _margemSel.has(String(p["ID"] || "")));
+      const comCusto = selecionados.filter(p => Number(p["Custo_Unitario"] || 0) > 0);
+      const semCustoQtd = selecionados.length - comCusto.length;
+      if (!comCusto.length) { toast("Nenhum dos selecionados tem custo cadastrado", "err"); return; }
+      const adminSenha = prompt(`Confirme a SENHA DE ADMIN para atualizar o preço de ${comCusto.length} produto(s):`);
+      if (adminSenha === null) return;
+      const itens = comCusto.map(p => {
+        const custo = Number(p["Custo_Unitario"] || 0);
+        const novoPreco = Math.round(custo * (1 + pct / 100) * 100) / 100;
+        return { id: String(p["ID"] || ""), "Preço (R$)": novoPreco };
+      });
+      try {
+        const res = await apiPost("atualizarProdutosBatch", { itens, adminSenha });
+        if (res.ok) {
+          toast(`✅ ${res.updated} produto(s) atualizado(s)` + (semCustoQtd ? ` · ${semCustoQtd} sem custo ignorado(s)` : ""));
+          closeMargemLoteModal();
+          allProds = []; await loadProds();
+        } else toast(res.erro || res.error || "Erro", "err");
+      } catch (e) { toast("Erro de conexão", "err"); }
     }
 
     // MODAL PRODUTO
@@ -7741,11 +8034,6 @@
     let docPagSel = "PIX";
 
     function initDoc() {
-      // Popula selector de produtos
-      const sel = document.getElementById("docProdSel");
-      sel.innerHTML = `<option value="">Selecione um produto...</option>` +
-        allProds.map(p => `<option value="${p["ID"]}">${p["Nome do Produto"] || "—"} — ${fmt(p["Preço (R$)"])}</option>`).join("");
-
       // Popula formas de pagamento da Config
       const formas = String(cfg.FORMAS_PAGAMENTO || "PIX,Cartão,Parcelado OrahBuy,Dinheiro,Boleto").split(",").map(s => s.trim()).filter(Boolean);
       const pagEl = document.getElementById("docPagOpts");
@@ -7806,12 +8094,33 @@
       docPagSel = pag;
     }
 
+    // Busca digitável de produto pro Docs (antes era <select> com todos os produtos, difícil de achar)
+    function _docBuscaProduto(q) {
+      const el = document.getElementById("docProdResults");
+      if (!el) return;
+      document.getElementById("docProdSelId").value = "";
+      q = q.trim().toLowerCase();
+      if (!q) { el.style.display = "none"; return; }
+      const achados = allProds.filter(p => p["Status"] !== "Inativo" && (p["Nome do Produto"] || "").toLowerCase().includes(q)).slice(0, 8);
+      if (!achados.length) {
+        el.innerHTML = `<div style="padding:8px 12px;font-size:12px;color:var(--muted)">Nenhum produto encontrado</div>`;
+        el.style.display = "block";
+        return;
+      }
+      el.innerHTML = achados.map(p => `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center" onmouseover="this.style.background='var(--d3)'" onmouseout="this.style.background=''" onclick="_docSelecionaProduto('${p["ID"]}')"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p["Nome do Produto"] || "—"}</span><span style="color:var(--g);flex-shrink:0;font-weight:700">${fmt(p["Preço (R$)"])}</span></div>`).join("");
+      el.style.display = "block";
+    }
+    function _docSelecionaProduto(id) {
+      const p = allProds.find(x => String(x["ID"]) === String(id));
+      document.getElementById("docProdSelId").value = id;
+      document.getElementById("docProdSearch").value = p ? (p["Nome do Produto"] || "") : "";
+      document.getElementById("docProdResults").style.display = "none";
+    }
     function addDocItem() {
-      const sel = document.getElementById("docProdSel");
+      const id = document.getElementById("docProdSelId").value;
       const qty = Math.max(1, parseInt(document.getElementById("docProdQty").value) || 1);
-      const id = sel.value;
-      if (!id) { toast("Selecione um produto", "err"); return; }
-      const prod = allProds.find(p => p["ID"] === id);
+      if (!id) { toast("Busque e selecione um produto", "err"); return; }
+      const prod = allProds.find(p => String(p["ID"]) === String(id));
       if (!prod) return;
       const preco = Number(prod["Preço Promo (R$)"] || 0) > 0 && Number(prod["Preço Promo (R$)"]) < Number(prod["Preço (R$)"])
         ? Number(prod["Preço Promo (R$)"])
@@ -7821,7 +8130,9 @@
       else docItems.push({ id, nome: prod["Nome do Produto"] || "—", img: prod["Imagem 1 (URL)"] || "", preco, qty });
       renderDocItems();
       updateDocTotal();
-      sel.value = "";
+      document.getElementById("docProdSelId").value = "";
+      document.getElementById("docProdSearch").value = "";
+      document.getElementById("docProdResults").style.display = "none";
       document.getElementById("docProdQty").value = 1;
     }
 
@@ -8352,7 +8663,7 @@
     let _temasAtivos = ["cyberpunk", "light"];
 
     function initTheme() {
-      let t = localStorage.getItem("ob_theme") || "cyberpunk";
+      let t = localStorage.getItem("ob_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "cyberpunk");
       if (t === "botafogo") { t = "cyberpunk"; localStorage.setItem("ob_theme", t); }
       applyTheme(t, true);
     }
@@ -9012,8 +9323,46 @@
       row.style.display = row.style.display === "flex" ? "none" : "flex";
     }
 
+    // N13
+    let _lucroData = null, _lucroTab = "categorias";
+    function _lucroFmtLinha(x, nomeKey) {
+      const cor = x.margem >= 30 ? "var(--g)" : x.margem >= 10 ? "var(--o)" : "var(--r)";
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.semCusto ? "⚠️ " : ""}${x[nomeKey]}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${x.qtd} un. · receita ${fmt(x.receita)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px">
+          <div style="font-size:13px;font-weight:800;color:${cor}">${fmt(x.lucro)}</div>
+          <div style="font-size:10px;color:${cor}">${x.margem}% margem</div>
+        </div>
+      </div>`;
+    }
+    function _lucroRender() {
+      const el = document.getElementById("lucroContent");
+      if (!el || !_lucroData) return;
+      const lista = _lucroTab === "categorias" ? _lucroData.categorias : _lucroData.produtos;
+      const nomeKey = _lucroTab === "categorias" ? "categoria" : "nome";
+      if (!lista || !lista.length) { el.innerHTML = `<div class="empty">Sem dados de pedidos ainda.</div>`; return; }
+      el.innerHTML = lista.slice(0, 15).map(x => _lucroFmtLinha(x, nomeKey)).join("");
+    }
+    function _lucroSetTab(tab, btn) {
+      _lucroTab = tab;
+      document.querySelectorAll(".lucro-tab").forEach(b => { b.classList.remove("on"); b.style.background = "none"; b.style.color = "var(--muted)"; });
+      btn.classList.add("on"); btn.style.background = "var(--g)"; btn.style.color = "#fff";
+      _lucroRender();
+    }
+    async function loadLucroPorProduto() {
+      const el = document.getElementById("lucroContent");
+      if (el) el.innerHTML = `<div class="loading"><div class="spin"></div>Calculando...</div>`;
+      try {
+        _lucroData = await apiGet("getLucroPorProduto");
+        _lucroRender();
+      } catch (e) { if (el) el.innerHTML = `<div class="empty" style="color:var(--r)">Erro ao calcular.</div>`; }
+    }
     async function loadAnalytics(periodo) {
       analyticsFilter = periodo || analyticsFilter;
+      if (!_lucroData) loadLucroPorProduto();
       document.querySelectorAll(".an-filter-btn").forEach(b => b.classList.toggle("on", b.dataset.p === analyticsFilter));
       const el = document.getElementById("analyticsContent");
       el.innerHTML = `<div class="loading"><div class="spin"></div>Carregando métricas...</div>`;
@@ -9334,6 +9683,241 @@
       if (toggleBtn) { toggleCupom(toggleBtn.dataset.cupToggle, toggleBtn.dataset.cupAtivo === "true"); return; }
     });
 
+    // DESTAQUES (G5.1/G21) — conteúdo configurável na home do site (produto/vídeo/promo)
+    let allDestaques = [];
+    let _destaquesCliques = {};
+    async function loadDestaques() {
+      const el = document.getElementById("destaquesList");
+      if (!el) return;
+      el.innerHTML = `<div class="loading"><div class="spin"></div>Carregando...</div>`;
+      try {
+        const proms = [apiGet("getDestaques"), apiGet("getDestaquesCliques").catch(() => null)];
+        if (!allProds.length) proms.push(apiGet("getProdutos", { verTodos: "1" }).catch(() => null));
+        const [r, rCliques, rProd] = await Promise.all(proms);
+        allDestaques = r.destaques || [];
+        _destaquesCliques = (rCliques && rCliques.cliques) || {};
+        if (rProd && rProd.produtos) allProds = rProd.produtos;
+        renderDestaquesList();
+      } catch(e) { el.innerHTML = `<div class="empty">Erro ao carregar destaques.</div>`; }
+    }
+    function _destNomeProduto(id) {
+      const p = allProds.find(pp => String(pp["ID"]) === String(id));
+      return p ? (p["Nome do Produto"] || p["Nome"] || id) : id;
+    }
+    function renderDestaquesList() {
+      const el = document.getElementById("destaquesList");
+      if (!el) return;
+      if (!allDestaques.length) { el.innerHTML = `<div class="empty">Nenhum destaque cadastrado.<br>Clique em <b>+ Novo</b> para adicionar.</div>`; return; }
+      el.innerHTML = allDestaques.map(d => {
+        const ativo = String(d["Ativo"] || "").toLowerCase() === "sim";
+        const tipo = d["Tipo"] || "—";
+        const ico = tipo === "Produto" ? "🛒" : tipo === "Video" ? "🎬" : "📢";
+        const refTxt = tipo === "Produto" ? _destNomeProduto(d["Ref"]) : (tipo === "Video" ? d["Ref"] : "");
+        const periodo = (d["Data_Inicio"] || d["Data_Fim"]) ? `${d["Data_Inicio"] || "—"} até ${d["Data_Fim"] || "—"}` : "Sempre ativo (sem período)";
+        const cliques = _destaquesCliques[String(d["ID"])] || 0;
+        return `<div class="cat-card" style="flex-direction:column;align-items:flex-start">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <span style="font-family:var(--H);font-size:14px;font-weight:800">${ico} ${tipo}</span>
+            <span style="font-size:11px;padding:3px 9px;border-radius:20px;${ativo ? "color:var(--g);background:rgba(255,85,0,.12);border:1px solid rgba(255,85,0,.3)" : "color:var(--muted);background:var(--d3)"}">${ativo ? "Ativo" : "Inativo"}</span>
+          </div>
+          ${d["Texto"] ? `<div style="font-size:13px;margin-top:6px">${d["Texto"]}</div>` : ""}
+          ${refTxt ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${refTxt}</div>` : ""}
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${periodo}</div>
+          ${tipo === "Produto" ? `<div style="font-size:11px;color:var(--c);margin-top:2px">👆 ${cliques} clique${cliques === 1 ? "" : "s"}</div>` : ""}
+          <div class="cat-actions" style="margin-top:8px">
+            <button class="cat-btn" data-dest-edit="${d["ID"]}">✏️ Editar</button>
+            <button class="cat-btn" style="color:var(--r)" data-dest-del="${d["ID"]}">🗑️ Excluir</button>
+          </div>
+        </div>`;
+      }).join("");
+    }
+    function _destTipoChanged() {
+      const tipo = document.getElementById("fDestTipo").value;
+      document.getElementById("fDestRefProdutoWrap").style.display = tipo === "Produto" ? "block" : "none";
+      document.getElementById("fDestRefVideoWrap").style.display = tipo === "Video" ? "block" : "none";
+      document.getElementById("fDestUploadWrap").style.display = tipo === "Video" ? "none" : "block";
+      _destUpdatePreview();
+    }
+    // Preview ao vivo — espelha o mesmo HTML que o index.html monta pro destaque real,
+    // simplificado com estilo inline (admin.html não carrega o CSS .dest-* do site)
+    function _destUpdatePreview() {
+      const box = document.getElementById("destPreviewBox");
+      if (!box) return;
+      const tipo = document.getElementById("fDestTipo").value;
+      const texto = (document.getElementById("fDestTexto").value || "").trim();
+      const mediaCustom = document.getElementById("fDestMediaCustom").value;
+      const isVideoCustom = mediaCustom && /\.(mp4|webm|mov)/i.test(mediaCustom);
+      const vazio = msg => { box.style.cssText = "background:#04090f;border:1px solid var(--border);border-radius:14px;padding:14px;min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px"; box.innerHTML = msg; };
+
+      if (tipo === "Video") {
+        const ref = (document.getElementById("fDestRefVideo").value || "").trim();
+        const m = ref.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if (!m) { vazio("Cole um link válido do YouTube pra ver o preview"); return; }
+        box.style.cssText = "background:#04090f;border:1px solid var(--border);border-radius:14px;overflow:hidden";
+        box.innerHTML = `<div style="position:relative">
+          <div style="background:#FF5500;color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;position:absolute;top:8px;left:8px;z-index:2">🎬 Destaque</div>
+          <div style="aspect-ratio:16/9;background:#000"><iframe src="https://www.youtube.com/embed/${m[1]}" style="width:100%;height:100%;border:0" allowfullscreen></iframe></div>
+          ${texto ? `<div style="padding:8px 10px;font-size:12px;font-weight:600;color:#e2f4ff">${texto}</div>` : ""}
+        </div>`;
+      } else if (tipo === "Produto") {
+        const prodId = document.getElementById("fDestRef").value;
+        const p = allProds.find(x => String(x["ID"]) === String(prodId));
+        if (!p) { vazio("Selecione um produto pra ver o preview"); return; }
+        const idx = Number(document.getElementById("fDestImagemIdx").value || 0);
+        const imgs = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean);
+        const imgProd = imgs[idx] || imgs[0] || "";
+        const midia = mediaCustom
+          ? (isVideoCustom ? `<video src="${mediaCustom}" style="width:84px;height:84px;object-fit:cover;border-radius:12px" muted></video>` : `<img src="${mediaCustom}" style="width:84px;height:84px;object-fit:cover;border-radius:12px">`)
+          : (imgProd ? `<img src="${imgProd}" style="width:84px;height:84px;object-fit:cover;border-radius:12px">` : `<div style="width:84px;height:84px;border-radius:12px;background:#0b1728;display:flex;align-items:center;justify-content:center;font-size:24px">📦</div>`);
+        const pr = Number(p["Preço (R$)"] || 0), pm = Number(p["Preço Promo (R$)"] || 0);
+        const preco = pm > 0 && pm < pr ? pm : pr;
+        box.style.cssText = "background:#04090f;border:1px solid var(--border);border-radius:14px;padding:14px 14px 14px 14px;position:relative";
+        box.innerHTML = `<div style="background:#FF5500;color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;position:absolute;top:8px;left:8px">⭐ Destaque</div>
+          <div style="display:flex;align-items:center;gap:12px;padding-top:14px">
+            ${midia}
+            <div style="flex:1;min-width:0">
+              ${texto ? `<div style="font-size:11px;color:var(--muted);font-weight:600">${texto}</div>` : ""}
+              <div style="font-size:14px;font-weight:800;color:#e2f4ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p["Nome do Produto"] || "—"}</div>
+              <div style="font-size:15px;font-weight:800;color:#FF7A35;margin-top:2px">${fmt(preco)}</div>
+            </div>
+          </div>`;
+      } else if (tipo === "Promo") {
+        if (!texto && !mediaCustom) { vazio("Escreva um texto ou envie uma imagem/vídeo pra ver o preview"); return; }
+        const midia = mediaCustom
+          ? (isVideoCustom ? `<video src="${mediaCustom}" style="width:100%;display:block" muted></video>` : `<img src="${mediaCustom}" style="width:100%;display:block">`)
+          : "";
+        box.style.cssText = "border-radius:14px;overflow:hidden;text-align:center;background:linear-gradient(135deg,rgba(255,85,0,.16),rgba(255,140,0,.12))";
+        box.innerHTML = `${midia}${texto ? `<div style="padding:16px;font-size:14px;font-weight:800;color:#e2f4ff">📢 ${texto}</div>` : ""}`;
+      }
+    }
+    function _destRenderImgPicker(prodId, selectedIdx) {
+      const p = allProds.find(pp => String(pp["ID"]) === String(prodId));
+      const wrap = document.getElementById("fDestImgPicker");
+      const opts = document.getElementById("fDestImgOptions");
+      if (!p) { wrap.style.display = "none"; return; }
+      const imgs = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean);
+      document.getElementById("fDestImagemIdx").value = selectedIdx || 0;
+      if (imgs.length <= 1) { wrap.style.display = "none"; return; }
+      opts.innerHTML = imgs.map((u, i) => `<img src="${u}" onclick="_destPickImg(${i})" data-idx="${i}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ${i === (selectedIdx || 0) ? "var(--g)" : "transparent"}">`).join("");
+      wrap.style.display = "block";
+    }
+    function _destPickImg(idx) {
+      document.getElementById("fDestImagemIdx").value = idx;
+      document.querySelectorAll("#fDestImgOptions img").forEach(img => {
+        img.style.borderColor = Number(img.dataset.idx) === idx ? "var(--g)" : "transparent";
+      });
+      _destUpdatePreview();
+    }
+    async function _destUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById("fDestUploadStatus");
+      statusEl.textContent = "⏳ Enviando...";
+      try {
+        const url = await uploadCloud(file);
+        document.getElementById("fDestMediaCustom").value = url;
+        statusEl.innerHTML = `✅ Enviado <button onclick="_destRemoverUpload()" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:11px;text-decoration:underline">remover</button>`;
+        const isVideo = file.type.startsWith("video");
+        document.getElementById("fDestUploadPreview").innerHTML = isVideo
+          ? `<video src="${url}" controls style="max-width:160px;max-height:120px;border-radius:8px"></video>`
+          : `<img src="${url}" style="max-width:160px;max-height:120px;border-radius:8px;object-fit:cover">`;
+      } catch (e) { statusEl.textContent = "❌ Erro no upload"; }
+      input.value = "";
+      _destUpdatePreview();
+    }
+    function _destRemoverUpload() {
+      document.getElementById("fDestMediaCustom").value = "";
+      document.getElementById("fDestUploadPreview").innerHTML = "";
+      document.getElementById("fDestUploadStatus").textContent = "";
+      _destUpdatePreview();
+    }
+    function _destBuscaProduto(q) {
+      const el = document.getElementById("fDestRefResultados");
+      q = q.trim().toLowerCase();
+      if (!q) { el.innerHTML = ""; return; }
+      const achados = allProds.filter(p => (p["Nome do Produto"] || p["Nome"] || "").toLowerCase().includes(q)).slice(0, 8);
+      if (!achados.length) { el.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px">Nenhum produto encontrado.</div>`; return; }
+      el.innerHTML = achados.map(p => {
+        const img = p["Imagem 1 (URL)"] || "";
+        const thumb = img ? `<img src="${img}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:6px;background:var(--d3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📦</div>`;
+        return `<div style="padding:6px 8px;font-size:12px;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--d3)'" onmouseout="this.style.background=''" onclick="_destSelecionaProduto('${p["ID"]}')">${thumb}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p["Nome do Produto"] || p["Nome"]}</span></div>`;
+      }).join("");
+    }
+    function _destSelecionaProduto(id) {
+      document.getElementById("fDestRef").value = id;
+      document.getElementById("fDestRefSelecionado").textContent = "Selecionado: " + _destNomeProduto(id);
+      document.getElementById("fDestRefResultados").innerHTML = "";
+      document.getElementById("fDestRefBusca").value = "";
+      _destRenderImgPicker(id, 0);
+      _destUpdatePreview();
+    }
+    function openDestaqueForm(id) {
+      const d = id ? allDestaques.find(x => String(x["ID"]) === String(id)) : null;
+      document.getElementById("destaqueFormTitle").textContent = d ? "Editar Destaque" : "Novo Destaque";
+      document.getElementById("fDestId").value = d ? d["ID"] : "";
+      document.getElementById("fDestTipo").value = d ? (d["Tipo"] || "Produto") : "Produto";
+      document.getElementById("fDestAtivo").value = d ? (String(d["Ativo"]).toLowerCase() === "sim" ? "Sim" : "Não") : "Sim";
+      document.getElementById("fDestTexto").value = d ? d["Texto"] || "" : "";
+      document.getElementById("fDestDataIni").value = "";
+      document.getElementById("fDestDataFim").value = "";
+      document.getElementById("fDestRef").value = d && d["Tipo"] === "Produto" ? d["Ref"] || "" : "";
+      document.getElementById("fDestRefSelecionado").textContent = d && d["Tipo"] === "Produto" && d["Ref"] ? "Selecionado: " + _destNomeProduto(d["Ref"]) : "";
+      document.getElementById("fDestRefBusca").value = "";
+      document.getElementById("fDestRefResultados").innerHTML = "";
+      document.getElementById("fDestRefVideo").value = d && d["Tipo"] === "Video" ? d["Ref"] || "" : "";
+      document.getElementById("fDestImgPicker").style.display = "none";
+      if (d && d["Tipo"] === "Produto" && d["Ref"]) _destRenderImgPicker(d["Ref"], Number(d["ImagemIdx"] || 0));
+      else document.getElementById("fDestImagemIdx").value = 0;
+      document.getElementById("fDestMediaCustom").value = d ? d["MediaCustom"] || "" : "";
+      document.getElementById("fDestUploadStatus").innerHTML = d && d["MediaCustom"] ? `✅ Enviado <button onclick="_destRemoverUpload()" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:11px;text-decoration:underline">remover</button>` : "";
+      document.getElementById("fDestUploadPreview").innerHTML = d && d["MediaCustom"]
+        ? (String(d["MediaCustom"]).match(/\.(mp4|webm|mov)/i) ? `<video src="${d["MediaCustom"]}" controls style="max-width:160px;max-height:120px;border-radius:8px"></video>` : `<img src="${d["MediaCustom"]}" style="max-width:160px;max-height:120px;border-radius:8px;object-fit:cover">`)
+        : "";
+      _destTipoChanged();
+      document.getElementById("destaqueFormSection").style.display = "block";
+    }
+    function closeDestaqueForm() {
+      document.getElementById("destaqueFormSection").style.display = "none";
+    }
+    async function salvarDestaqueAdmin() {
+      const tipo = document.getElementById("fDestTipo").value;
+      const ref = tipo === "Video" ? document.getElementById("fDestRefVideo").value.trim() : document.getElementById("fDestRef").value.trim();
+      if (tipo !== "Promo" && !ref) { toast(tipo === "Produto" ? "Selecione um produto" : "Informe o link do vídeo", "err"); return; }
+      const btn = document.getElementById("saveDestaqueBtn");
+      btn.disabled = true; btn.textContent = "Salvando...";
+      try {
+        const res = await apiGet("salvarDestaque", {
+          id: document.getElementById("fDestId").value,
+          tipo,
+          ref,
+          texto: document.getElementById("fDestTexto").value.trim(),
+          dataInicio: document.getElementById("fDestDataIni").value,
+          dataFim: document.getElementById("fDestDataFim").value,
+          ativo: document.getElementById("fDestAtivo").value,
+          imagemIdx: document.getElementById("fDestImagemIdx").value,
+          mediaCustom: document.getElementById("fDestMediaCustom").value
+        });
+        if (res.ok) { toast("Destaque salvo ✅"); closeDestaqueForm(); await loadDestaques(); }
+        else toast(res.error || "Erro", "err");
+      } catch(e) { toast("Erro de conexão", "err"); }
+      btn.disabled = false; btn.textContent = "💾 Salvar";
+    }
+    function deletarDestaqueAdmin(id) {
+      toastConfirm("Excluir este destaque?", "🗑️ Excluir", "Cancelar", async () => {
+        try {
+          const res = await apiGet("deletarDestaque", { id });
+          if (res.ok) { toast("Destaque excluído"); await loadDestaques(); }
+          else toast(res.error || "Erro", "err");
+        } catch(e) { toast("Erro de conexão", "err"); }
+      }, () => {});
+    }
+    document.getElementById("destaquesList").addEventListener("click", e => {
+      const editBtn = e.target.closest("[data-dest-edit]");
+      const delBtn = e.target.closest("[data-dest-del]");
+      if (editBtn) { openDestaqueForm(editBtn.dataset.destEdit); return; }
+      if (delBtn) { deletarDestaqueAdmin(delBtn.dataset.destDel); return; }
+    });
+
     // OPERADORES
     let _allOps = [];
 
@@ -9511,9 +10095,11 @@
         return;
       }
       if (delBtn) {
+        const adminSenha = prompt("Confirme a SENHA DE ADMIN para excluir operador:");
+        if (adminSenha === null) return;
         toastUndo("Operador removido.",
           async () => {
-            const r = await apiGet("deletarOperador", { id: delBtn.dataset.opDel }).catch(() => ({ ok: false }));
+            const r = await apiGet("deletarOperador", { id: delBtn.dataset.opDel, adminSenha }).catch(() => ({ ok: false }));
             if (r.ok) { if (r.inativado) toast("⚠️ " + (r.aviso || "Operador inativado (tem pedidos vinculados)")); else toast("Operador removido ✅"); loadOperadores(); } else toast(r.error || "Erro ao deletar", "err");
           },
           () => {}
@@ -9580,11 +10166,13 @@
           return sb - sa;
         });
 
+        _lastClientesList = _allClientes;
         renderClientesList(_allClientes);
       } catch(e) { if (el) el.innerHTML = `<div class="empty" style="color:var(--r)">Erro ao carregar.</div>`; }
       finally { _clientesCarregando = false; }
     }
 
+    let _lastClientesList = [];
     function renderClientesList(list) {
       const el = document.getElementById("clientesList");
       if (!el) return;
@@ -9634,7 +10222,7 @@
 
     function filterClientes(q) {
       if (!_allClientes.length) return;
-      if (!q.trim()) { renderClientesList(_allClientes); return; }
+      if (!q.trim()) { _lastClientesList = _allClientes; renderClientesList(_allClientes); return; }
       const ql = q.toLowerCase();
       // Filtra mas mantém referência aos índices originais — cria subset com índice original
       const filtered = _allClientes.map((c, i) => ({ ...c, _origIdx: i }))
@@ -9642,6 +10230,7 @@
                      (c.telefone || c.WhatsApp || "").includes(q) ||
                      (c.Email || "").toLowerCase().includes(ql));
       // Renderiza com _origIdx para que openClienteDetalhe use índice correto
+      _lastClientesList = filtered;
       renderClientesList(filtered);
     }
 
@@ -9787,8 +10376,10 @@
     async function deletarCliente(id, nome) {
       if (!id) { toast("Cliente sem ID (importado do histórico). Não é possível deletar.", "err"); return; }
       if (!confirm(`Remover "${nome}" da base de clientes?`)) return;
+      const adminSenha = prompt("Confirme a SENHA DE ADMIN para excluir cliente:");
+      if (adminSenha === null) return;
       try {
-        const r = await apiGet("deletarCliente", { id });
+        const r = await apiGet("deletarCliente", { id, adminSenha });
         if (r.ok) { toast("Cliente removido ✅"); _allClientes = []; loadClientes(); }
         else toast(r.error || "Erro ao remover", "err");
       } catch(e) { toast("Erro de conexão", "err"); }

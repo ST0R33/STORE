@@ -508,6 +508,202 @@
       transform: scale(.94)
     }
 
+    /* DESTAQUE DINÂMICO DA HOME (G5.1) */
+    #destSec {
+      position: relative;
+      z-index: 1;
+      margin: 14px 14px 0;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--d2);
+      transition: opacity .18s ease
+    }
+
+    #destSec.fading {
+      opacity: 0
+    }
+
+    /* G5.1.2: setas + dots do carrossel — só aparece quando há mais de 1 destaque ativo.
+       Setas (padrão .carr já usado no carrossel de fotos do produto) resolvem "no PC nem
+       aparece" — dot sozinho é pouco visível. Dot ganhou área de toque maior (padding +
+       background-clip) sem crescer visualmente, resolve "difícil de clicar no celular". */
+    .dest-arr {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(4, 9, 15, .6);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s
+    }
+
+    .dest-arr:active {
+      background: rgba(4, 9, 15, .85)
+    }
+
+    .dest-prev {
+      left: 8px
+    }
+
+    .dest-next {
+      right: 8px
+    }
+
+    /* Dica visual depois de 4s parado num slide — pisca em vez de trocar sozinho */
+    @keyframes destNeonPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 85, 0, .55), 0 0 6px rgba(255, 85, 0, .3); border-color: rgba(255, 85, 0, .4) }
+      50% { box-shadow: 0 0 0 5px rgba(255, 85, 0, 0), 0 0 18px rgba(255, 85, 0, .9); border-color: var(--g) }
+    }
+
+    .dest-next.pulse {
+      animation: destNeonPulse 1.3s ease-in-out infinite;
+      color: var(--g)
+    }
+
+    .dest-dots {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      z-index: 2
+    }
+
+    .dest-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .35);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+      /* área de toque real ~30px mesmo com o dot visual de 6px */
+      padding: 12px;
+      margin: -12px;
+      background-clip: content-box;
+      box-sizing: content-box
+    }
+
+    .dest-dot.on {
+      background: var(--g);
+      transform: scale(1.3)
+    }
+
+    .dest-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      background: var(--o);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      box-shadow: 0 0 14px rgba(255, 85, 0, .4)
+    }
+
+    .dest-video {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000
+    }
+
+    .dest-video iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block
+    }
+
+    .dest-produto {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      cursor: pointer
+    }
+
+    .dest-produto img {
+      width: 84px;
+      height: 84px;
+      object-fit: cover;
+      border-radius: 12px;
+      flex-shrink: 0;
+      background: var(--d3)
+    }
+
+    .dest-produto-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .dest-produto-txt {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 3px
+    }
+
+    .dest-produto-nome {
+      font-family: var(--H);
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical
+    }
+
+    .dest-produto-preco {
+      font-family: var(--H);
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--g);
+      margin-top: 5px
+    }
+
+    .dest-promo {
+      padding: 20px 18px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(255, 85, 0, .16), rgba(255, 140, 0, .12))
+    }
+
+    /* G5.1.1: mídia enviada pro Promo — cancela o padding do card pra ficar full-bleed */
+    .dest-promo:has(img, video) {
+      padding: 0 0 16px
+    }
+
+    .dest-promo img, .dest-promo video {
+      border-radius: 0
+    }
+
+    .dest-promo-txt {
+      font-family: var(--H);
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1.35;
+      padding: 0 18px;
+      margin-top: 12px
+    }
+
     /* SECTION HEADER */
     .shdr {
       display: flex;
@@ -2207,6 +2403,9 @@
     </div>
   </div>
 
+  <!-- DESTAQUE DINÂMICO (G5.1) -->
+  <div id="destSec" style="display:none"></div>
+
   <!-- RECENT PRODUCTS -->
   <div id="recentSec" style="display:none">
     <div style="padding:0 14px">
@@ -2556,7 +2755,8 @@
   <script>
     // Theme init — antes de qualquer render
     (function() {
-      let t = localStorage.getItem("ob_theme") || "light";
+      // N7: sem tema salvo, respeita o esquema do SO na 1ª visita em vez de fixar "light"
+      let t = localStorage.getItem("ob_theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "cyberpunk" : "light");
       if (t === "botafogo" || t === "gold") { t = "light"; localStorage.setItem("ob_theme", t); }
       if (t !== "cyberpunk") document.documentElement.className = "theme-" + t;
       document.addEventListener("DOMContentLoaded", function() {
@@ -2596,6 +2796,53 @@
     function clearCache() { for (const k of Object.keys(sessionStorage)) { if (!k.startsWith("obc")) sessionStorage.removeItem(k); } }
     function fmt(v) { return "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 }); }
     function pf(p) { const a = Number(p["Preço (R$)"] || 0), b = Number(p["Preço Promo (R$)"] || 0); return b > 0 && b < a ? b : a; }
+    // N4: injeta transform Cloudinary (f_auto = formato ideal por navegador ex. WebP/AVIF,
+    // q_auto = qualidade automática, w_ = redimensiona no servidor) — menos peso sem tocar a URL salva
+    function cldOpt(url, w) {
+      if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) return url;
+      const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+      return url.replace("/upload/", "/upload/" + params + "/");
+    }
+    // C3: nome de produto vai direto pra innerHTML no destaque — escapar evita HTML/script quebrar o layout
+    function esc(s) { const d = document.createElement("div"); d.textContent = String(s || ""); return d.innerHTML; }
+    // N16: PIX "copia e cola" (BRCode/EMV) — string que o app do banco lê e já preenche
+    // chave+valor+beneficiário sozinho, sem o cliente digitar nada
+    function _pixField(id, value) { return id + String(value.length).padStart(2, "0") + value; }
+    function _pixCrc16(str) {
+      let crc = 0xFFFF;
+      for (let i = 0; i < str.length; i++) {
+        crc ^= str.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) { crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1); crc &= 0xFFFF; }
+      }
+      return crc.toString(16).toUpperCase().padStart(4, "0");
+    }
+    function _pixAscii(s, max) {
+      return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9 ]/g, "").toUpperCase().trim().substring(0, max) || "ORAHBUY";
+    }
+    function gerarPixCopiaCola(chave, nome, cidade, valor, txid) {
+      if (!chave) return "";
+      const nomeF = _pixAscii(nome, 25), cidadeF = _pixAscii(cidade, 15), txidF = (txid || "***").substring(0, 25);
+      const merchantAccount = _pixField("00", "br.gov.bcb.pix") + _pixField("01", String(chave).trim());
+      let payload = _pixField("00", "01") + _pixField("01", "12")
+        + _pixField("26", merchantAccount)
+        + _pixField("52", "0000") + _pixField("53", "986")
+        + (valor > 0 ? _pixField("54", Number(valor).toFixed(2)) : "")
+        + _pixField("58", "BR") + _pixField("59", nomeF) + _pixField("60", cidadeF)
+        + _pixField("62", _pixField("05", txidF));
+      payload += "6304";
+      return payload + _pixCrc16(payload);
+    }
+    async function copiarPix(valor) {
+      const chave = cfg.PIX_CHAVE || "";
+      if (!chave) { showToast("Chave Pix não configurada"); return; }
+      const codigo = gerarPixCopiaCola(chave, cfg.PIX_NOME || cfg.NOME_LOJA || "OrahBuy", cfg.PIX_CIDADE || "SAO PAULO", valor, "");
+      try {
+        await navigator.clipboard.writeText(codigo);
+        showToast("✅ Código Pix copiado! Cole no app do seu banco");
+      } catch (e) {
+        showToast("Não deu pra copiar automático — chave Pix: " + chave);
+      }
+    }
 
     // ── LOG ACESSO (fire-and-forget) ──────────────────────
     function logAcesso(idProduto, tipoAcao) {
@@ -2644,7 +2891,9 @@
     // ── INIT ─────────────────────────────────────────────
     async function init() {
       try {
-        const [cr, br, pr, fr] = await Promise.all([apiG("getConfig"), apiG("getBanners"), apiG("getProdutos"), apiG("getFrete")]);
+        // N3: getCategorias entra no mesmo Promise.all — antes rodava só DEPOIS do resto
+        // terminar (1 round-trip a mais de latência à toa, já que não depende de nada acima)
+        const [cr, br, pr, fr, catR] = await Promise.all([apiG("getConfig"), apiG("getBanners"), apiG("getProdutos"), apiG("getFrete"), apiG("getCategorias").catch(() => null)]);
         cfg = cr.config || {};
         // Hero configurável via planilha (chaves: HERO_TITULO, HERO_SUBTITULO, HERO_PILL)
         if (cfg.HERO_TITULO) document.getElementById("heroTitle").innerHTML = cfg.HERO_TITULO;
@@ -2657,6 +2906,8 @@
         document.getElementById("hcta").href = `https://wa.me/${wpp}?text=Olá!+Quero+conhecer+os+produtos+OrahBuy!`;
         banners = (br.banners || []).filter(b => String(b["Ativo?"]).toLowerCase() === "sim").sort((a, z) => Number(a["Ordem"]) - Number(z["Ordem"]));
         renderBanners();
+        // G5.1: destaque dinâmico não trava o boot — carrega em paralelo e renderiza quando chegar
+        apiG("getDestaquesAtivos").then(dr => renderDestaques(dr.destaques)).catch(() => {});
         allProds = pr.produtos || [];
         prods = allProds;
         fretes = fr.fretes || [];
@@ -2671,7 +2922,7 @@
         try {
           const cats = JSON.parse(localStorage.getItem("ob_cats") || "[]");
           if (cats.length) { allCats = cats; renderDynCats(cats); }
-          const rc = await apiG("getCategorias");
+          const rc = catR || {};
           if (rc.categorias && rc.categorias.length) {
             allCats = rc.categorias;
             localStorage.setItem("ob_cats", JSON.stringify(rc.categorias));
@@ -2718,7 +2969,7 @@
         const track = document.getElementById("recentTrack");
         track.innerHTML = list.map(p => {
           const pfv = pf(p);
-          const img = p["Imagem 1 (URL)"] || "";
+          const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
           const d = JSON.stringify(p).replace(/'/g, "&apos;");
           return `<div class="rpc" onclick='openP(${d})'>
         <div class="rpc-img">${img ? `<img src="${img}" alt="${(p["Nome do Produto"] || "").replace(/"/g, "")}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rpc-img-ph">📦</div>`}</div>
@@ -2750,6 +3001,103 @@
         return `<div class="bslide${i === 0 ? " on" : ""}" style="background:#${b["Cor Fundo (hex)"] || "FF6D00"};color:#${b["Cor Texto (hex)"] || "FFFFFF"};${lnk?"cursor:pointer":""}">${inner}</div>`;
       }).join("");
       if (banners.length > 1) { setInterval(() => { const s = w.querySelectorAll(".bslide"); s[banIdx].classList.remove("on"); banIdx = (banIdx + 1) % s.length; s[banIdx].classList.add("on"); }, 4000); }
+    }
+
+    // ── DESTAQUE DINÂMICO DA HOME (G5.1) ──────────────────
+    function _ytId(url) {
+      const m = String(url || "").match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : "";
+    }
+    // G5.1.2: monta o HTML de 1 slide (sem tocar no DOM) — usado tanto pro slide único
+    // quanto por cada posição do carrossel quando há mais de 1 destaque ativo
+    function _destSlideHtml(d) {
+      if (!d || !d.tipo) return "";
+      if (d.tipo === "Video") {
+        const id = _ytId(d.ref);
+        if (!id) return "";
+        return `<div class="dest-badge">🎬 Destaque</div>
+          <div class="dest-video"><iframe src="https://www.youtube.com/embed/${id}" title="Destaque" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>
+          ${d.texto ? `<div style="padding:10px 14px;font-size:13px;font-weight:600">${esc(d.texto)}</div>` : ""}`;
+      } else if (d.tipo === "Produto" && d.produto) {
+        const p = d.produto;
+        // MediaCustom (upload direto) tem prioridade; senão usa a foto do produto no
+        // índice escolhido pelo admin (ImagemIdx), com fallback pra Imagem 1
+        const isVideoCustom = d.mediaCustom && /\.(mp4|webm|mov)/i.test(d.mediaCustom);
+        const imgsProd = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean);
+        const imgProd = imgsProd[d.imagemIdx] || imgsProd[0] || "";
+        const midia = d.mediaCustom
+          ? (isVideoCustom ? `<video src="${d.mediaCustom}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${cldOpt(d.mediaCustom, 400)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="this.style.display='none'">`)
+          : (imgProd ? `<img src="${cldOpt(imgProd, 240)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="this.style.display='none'">` : `<div style="width:84px;height:84px;border-radius:12px;background:var(--d3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">📦</div>`);
+        const dj = JSON.stringify(p).replace(/'/g, "&apos;");
+        const destId = String(d.id || "").replace(/'/g, "\\'");
+        return `<div class="dest-badge">⭐ Destaque</div>
+          <div class="dest-produto" onclick='logAcao("DESTAQUE_CLICK","${destId}");openP(${dj})'>
+            ${midia}
+            <div class="dest-produto-body">
+              ${d.texto ? `<div class="dest-produto-txt">${esc(d.texto)}</div>` : ""}
+              <div class="dest-produto-nome">${esc(p["Nome do Produto"] || "—")}</div>
+              <div class="dest-produto-preco">${fmt(pf(p))}</div>
+            </div>
+          </div>`;
+      } else if (d.tipo === "Promo") {
+        if (!d.texto && !d.mediaCustom) return "";
+        const isVideoCustom = d.mediaCustom && /\.(mp4|webm|mov)/i.test(d.mediaCustom);
+        const midia = d.mediaCustom
+          ? (isVideoCustom ? `<video src="${d.mediaCustom}" autoplay muted loop playsinline style="width:100%;display:block"></video>` : `<img src="${cldOpt(d.mediaCustom, 700)}" style="width:100%;display:block" loading="lazy">`)
+          : "";
+        return `<div class="dest-promo">${midia}${d.texto ? `<div class="dest-promo-txt">📢 ${esc(d.texto)}</div>` : ""}</div>`;
+      }
+      return "";
+    }
+    // G5.1.2: NÃO troca sozinho — auto-avanço interrompia vídeo em reprodução (decisão do
+    // dono). Em vez disso, a seta "próximo" pisca (glow neon) depois de 4s parado, como
+    // dica visual de que tem mais destaque pra ver, sem forçar a troca.
+    let _destList = [], _destIdx = 0, _destPulseTimer = null;
+    function renderDestaques(list) {
+      const sec = document.getElementById("destSec");
+      if (!sec) return;
+      _destList = (list || []).filter(d => _destSlideHtml(d));
+      _destIdx = 0;
+      if (_destPulseTimer) { clearTimeout(_destPulseTimer); _destPulseTimer = null; }
+      if (!_destList.length) { sec.style.display = "none"; return; }
+      _paintDestSlide(0);
+      _destArmPulse();
+    }
+    function _paintDestSlide(idx) {
+      const sec = document.getElementById("destSec");
+      const d = _destList[idx];
+      if (!sec || !d) return;
+      let navHtml = "";
+      if (_destList.length > 1) {
+        const dotsHtml = _destList.map((_, i) => `<div class="dest-dot${i === idx ? " on" : ""}" onclick="event.stopPropagation();_destGoTo(${i})"></div>`).join("");
+        navHtml = `<button class="dest-arr dest-prev" onclick="event.stopPropagation();_destPrev()" aria-label="Destaque anterior">‹</button>
+          <button class="dest-arr dest-next" onclick="event.stopPropagation();_destNext()" aria-label="Próximo destaque">›</button>
+          <div class="dest-dots">${dotsHtml}</div>`;
+      }
+      sec.innerHTML = _destSlideHtml(d) + navHtml;
+      sec.style.display = "block";
+    }
+    function _destPrev() { _destGoTo((_destIdx - 1 + _destList.length) % _destList.length); }
+    function _destNext() { _destGoTo((_destIdx + 1) % _destList.length); }
+    function _destArmPulse() {
+      if (_destPulseTimer) { clearTimeout(_destPulseTimer); _destPulseTimer = null; }
+      if (_destList.length <= 1) return;
+      _destPulseTimer = setTimeout(() => {
+        const btn = document.querySelector("#destSec .dest-next");
+        if (btn) btn.classList.add("pulse");
+      }, 4000);
+    }
+    // idx: troca de slide com fade — só acontece por clique (seta/dot), nunca sozinho
+    function _destGoTo(idx) {
+      _destIdx = idx;
+      const sec = document.getElementById("destSec");
+      if (!sec) return;
+      sec.classList.add("fading");
+      setTimeout(() => {
+        _paintDestSlide(_destIdx);
+        requestAnimationFrame(() => requestAnimationFrame(() => sec.classList.remove("fading")));
+      }, 180);
+      _destArmPulse(); // reinicia a contagem dos 4s pra piscar de novo no novo slide
     }
 
     // ── CAT CAROUSEL — scroll nativo (overflow-x: auto no .cat-outer) ──────
@@ -2788,7 +3136,7 @@
         if (titleEl) titleEl.textContent = nome ? `Especialmente para você, ${nome} 👋` : "Vistos Recentemente";
         track.innerHTML = viewed.slice(0, 8).map(p => {
           const pfv = pf(p);
-          const img = p["Imagem 1 (URL)"] || "";
+          const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
           const d = JSON.stringify(p).replace(/'/g, "&apos;");
           return `<div class="rpc" onclick='openP(${d})'>
             <div class="rpc-img">${img ? `<img src="${img}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rpc-img-ph">📦</div>`}</div>
@@ -2845,7 +3193,7 @@
 
     function buildPCard(p) {
       const pr = Number(p["Preço (R$)"] || 0), pm = Number(p["Preço Promo (R$)"] || 0), pfv = pf(p);
-      const imgs = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean);
+      const imgs = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean).map(u => cldOpt(u, 240));
       const badge = p["Destaque?"] == "Sim" ? `<div class="pb ph">🔥 Destaque</div>` : pm > 0 && pm < pr ? `<div class="pb ps">PROMO</div>` : `<div class="pb pn">Novo</div>`;
       const parc = Number(p["Parcelas Máx"] || 0);
       const estRaw = p["Estoque"];
@@ -2966,7 +3314,7 @@
       if (vars.length > 1) { vw.style.display = "block"; document.getElementById("varopts").innerHTML = vars.map((v, i) => `<div class="vo${i === 0 ? " on" : ""}" onclick="svar(this)">${v}</div>`).join(""); }
       else vw.style.display = "none";
       // media
-      cMedia = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"], p["Vídeo (URL)"]].filter(Boolean);
+      cMedia = [cldOpt(p["Imagem 1 (URL)"], 1000), cldOpt(p["Imagem 2 (URL)"], 1000), cldOpt(p["Imagem 3 (URL)"], 1000), p["Vídeo (URL)"]].filter(Boolean);
       if (!cMedia.length) cMedia = [""];
       buildCar();
       history.pushState({ gjModal: "product" }, "");
@@ -3497,7 +3845,7 @@
       if (!favProds.length) return;
       track.innerHTML = favProds.map(p => {
         const pfv = pf(p);
-        const img = p["Imagem 1 (URL)"] || "";
+        const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
         const d = JSON.stringify(p).replace(/'/g, "&apos;");
         return `<div class="rpc" onclick='openP(${d})'>
           <div class="rpc-img" style="position:relative">
@@ -3869,9 +4217,14 @@
           <div style="font-size:9px;color:#8899aa;letter-spacing:.5px;text-transform:uppercase">${_RC_STORE} · Obrigado pela preferência 🙏</div>
           <div style="font-size:8px;color:rgba(136,153,170,.5);margin-top:3px">${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
         </div>`;
+      const valorPix = !quitado ? (saldo > 0 ? saldo : total) : 0;
+      const pixBtn = (cfg.PIX_CHAVE && valorPix > 0)
+        ? `<button class="rbtn" style="max-width:420px;margin:8px auto 0;display:block;width:100%;background:#00875a" onclick="copiarPix(${valorPix})">📋 Copiar código Pix (${fmt(valorPix)})</button>`
+        : "";
       const area = document.getElementById("reciboArea");
       area.innerHTML = `<div id="rcCardCli" style="max-width:420px;margin:0 auto;background:#04090f;border:1px solid #1a2840;border-radius:16px;overflow:hidden;font-family:Inter,system-ui,sans-serif">${card}</div>
-        <button class="rbtn" id="rcImgBtnCli" style="max-width:420px;margin:14px auto 0;display:block;width:100%" onclick="gerarImagemReciboCli()">📸 Baixar / Compartilhar imagem</button>`;
+        <button class="rbtn" id="rcImgBtnCli" style="max-width:420px;margin:14px auto 0;display:block;width:100%" onclick="gerarImagemReciboCli()">📸 Baixar / Compartilhar imagem</button>
+        ${pixBtn}`;
       pdTab("recibo");
     }
     async function gerarImagemReciboCli() {
