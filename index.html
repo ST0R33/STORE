@@ -2799,9 +2799,21 @@
     // N4: injeta transform Cloudinary (f_auto = formato ideal por navegador ex. WebP/AVIF,
     // q_auto = qualidade automática, w_ = redimensiona no servidor) — menos peso sem tocar a URL salva
     function cldOpt(url, w) {
-      if (!url || !url.includes("res.cloudinary.com") || !url.includes("/upload/")) return url;
-      const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
-      return url.replace("/upload/", "/upload/" + params + "/");
+      if (!url) return url;
+      // Cloudinary
+      if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
+        const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+        return url.replace("/upload/", "/upload/" + params + "/");
+      }
+      // Openinary — formato é /t/<transform>/<pasta>/<arquivo>; transform vai
+      // como segmento próprio ANTES da pasta (barra, não vírgula — vírgula fazia
+      // a pasta ser lida como parâmetro de transform e sumir do path → 404,
+      // ver GJ STORE/mind/errors-to-avoid.md BUG-CLDOPT-OPENINARY-404)
+      if (url.includes("/t/") && !url.includes("/t/f_")) {
+        const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+        return url.replace("/t/", "/t/" + params + "/");
+      }
+      return url;
     }
     // C3: nome de produto vai direto pra innerHTML no destaque — escapar evita HTML/script quebrar o layout
     function esc(s) { const d = document.createElement("div"); d.textContent = String(s || ""); return d.innerHTML; }

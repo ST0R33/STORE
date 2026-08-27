@@ -23,8 +23,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   const url = req.url;
 
-  // GAS API e Cloudinary: sempre rede (dados frescos)
-  if (url.includes('script.google.com') || url.includes('cloudinary.com')) {
+  // GAS API, Cloudinary e Openinary: sempre rede (dados frescos)
+  if (url.includes('script.google.com') || url.includes('cloudinary.com') || url.includes('servidor-1.tailc513c6.ts.net')) {
     return;
   }
 
