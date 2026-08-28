@@ -4392,7 +4392,9 @@
     const CLOUDINARY_PRESET = _cfgVal(typeof CFG_CLOUDINARY_PRESET !== "undefined" ? CFG_CLOUDINARY_PRESET : "");
     // Openinary self-host (mesmo servidor do GJ STORE, pasta "orahbuy/" isolada — ver mind/decisions.md D1
     // sobre não acoplar OrahBuy no GJ Store; aqui é só infra de imagem compartilhada, dado/backend seguem isolados)
-    const OPENINARY_URL = "https://servidor-1.tailc513c6.ts.net:3100";
+    // 2026-08-28: porta 3100 nunca foi alcançável por Funnel público de verdade (só 443/8443/10000
+    // são autorizados) — migrado pra /img sob a 8443, mesma porta do Nuvário (path-based via tailscale serve)
+    const OPENINARY_URL = "https://servidor-1.tailc513c6.ts.net:8443/img";
     const OPENINARY_KEY = "FeVbDJnaPgaGrtLuNUGcFPgLDFRudXIoDUVtHSItxSPMYTKyfiYHZCpsSOvAZcXz";
     const SITE_URL = _cfgVal(typeof CFG_SITE_URL !== "undefined" ? CFG_SITE_URL : "");
     // Base p/ links de compartilhar produto: usa SITE_URL do config; senão deriva da pasta atual (index fica ao lado do admin)
