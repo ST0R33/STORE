@@ -2510,6 +2510,7 @@
       <div class="mc" data-marca="lattafa">Lattafa</div>
       <div class="mc" data-marca="la-rive">La Rive</div>
       <div class="mc" data-marca="paris-elysees">Paris Elysees</div>
+      <div class="mc" data-marca="armaf">Armaf</div>
       <div class="mc" data-marca="outros">Outras</div>
     </div>
   </div>
@@ -3226,7 +3227,7 @@
       }
       if (catA) l = l.filter(p => p["Categoria"] === catA);
       if (catA === "Perfumes" && marcaA) {
-        const MARCAS_CONHECIDAS = ["lattafa", "la-rive", "paris-elysees"];
+        const MARCAS_CONHECIDAS = ["lattafa", "la-rive", "paris-elysees", "armaf"];
         l = l.filter(p => {
           const tags = (p["Tags_Personalizadas"] || "").toLowerCase();
           return marcaA === "outros" ? !MARCAS_CONHECIDAS.some(m => tags.includes(m)) : tags.includes(marcaA);
