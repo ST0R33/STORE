@@ -2827,12 +2827,20 @@
 
     // ── API ──────────────────────────────────────────────
     async function apiG(action, params = {}) {
+      // getProdutos NUNCA usa cache de sessionStorage: preço/estoque precisa ser sempre
+      // o valor atual da planilha. Cache de 5min aqui fazia cliente ver preço velho até
+      // o TTL expirar, e F5 comum não resolve pq sessionStorage sobrevive a reload.
+      const noCache = action === "getProdutos";
       const k = action + JSON.stringify(params);
-      try { const d = JSON.parse(sessionStorage.getItem(k) || "null"); if (d && Date.now() - d.t < TTL) return d.v; } catch (e) { }
+      if (!noCache) {
+        try { const d = JSON.parse(sessionStorage.getItem(k) || "null"); if (d && Date.now() - d.t < TTL) return d.v; } catch (e) { }
+      }
       const u = new URL(API); u.searchParams.set("action", action);
       Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
       const r = await fetch(u); const data = await r.json();
-      try { sessionStorage.setItem(k, JSON.stringify({ t: Date.now(), v: data })); } catch (e) { }
+      if (!noCache) {
+        try { sessionStorage.setItem(k, JSON.stringify({ t: Date.now(), v: data })); } catch (e) { }
+      }
       return data;
     }
     function apiG2(action, params = {}) {
@@ -2861,6 +2869,16 @@
         return url.replace("/t/", "/t/" + params + "/");
       }
       return url;
+    }
+    // Grid inicial dispara várias imagens de uma vez pro Openinary (self-host, não é CDN
+    // dedicado) — 1ª tentativa às vezes falha por causa disso; onerror escondia pra sempre
+    // sem tentar de novo, e só ao abrir o produto (1 imagem por vez, sem concorrência) que
+    // carregava. Retry único com cache-bust resolve sem precisar mexer no grid.
+    function imgRetry(el) {
+      if (el.dataset.retried) { el.style.display = "none"; return; }
+      el.dataset.retried = "1";
+      const src = el.src;
+      setTimeout(() => { el.src = src.replace(/[?&]_r=\d+/, "") + (src.includes("?") ? "&" : "?") + "_r=" + Date.now(); }, 500);
     }
     // C3: nome de produto vai direto pra innerHTML no destaque — escapar evita HTML/script quebrar o layout
     function esc(s) { const d = document.createElement("div"); d.textContent = String(s || ""); return d.innerHTML; }
@@ -3031,7 +3049,7 @@
           const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
           const d = JSON.stringify(p).replace(/'/g, "&apos;");
           return `<div class="rpc" onclick='openP(${d})'>
-        <div class="rpc-img">${img ? `<img src="${img}" alt="${(p["Nome do Produto"] || "").replace(/"/g, "")}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rpc-img-ph">📦</div>`}</div>
+        <div class="rpc-img">${img ? `<img src="${img}" alt="${(p["Nome do Produto"] || "").replace(/"/g, "")}" loading="lazy" onerror="imgRetry(this)">` : `<div class="rpc-img-ph">📦</div>`}</div>
         <div class="rpc-body">
           <div class="rpc-name">${p["Nome do Produto"] || "—"}</div>
           <div class="rpc-price">${fmt(pfv)}</div>
@@ -3085,8 +3103,8 @@
         const imgsProd = [p["Imagem 1 (URL)"], p["Imagem 2 (URL)"], p["Imagem 3 (URL)"]].filter(Boolean);
         const imgProd = imgsProd[d.imagemIdx] || imgsProd[0] || "";
         const midia = d.mediaCustom
-          ? (isVideoCustom ? `<video src="${d.mediaCustom}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${cldOpt(d.mediaCustom, 400)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="this.style.display='none'">`)
-          : (imgProd ? `<img src="${cldOpt(imgProd, 240)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="this.style.display='none'">` : `<div style="width:84px;height:84px;border-radius:12px;background:var(--d3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">📦</div>`);
+          ? (isVideoCustom ? `<video src="${d.mediaCustom}" autoplay muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${cldOpt(d.mediaCustom, 400)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="imgRetry(this)">`)
+          : (imgProd ? `<img src="${cldOpt(imgProd, 240)}" alt="${esc(p["Nome do Produto"] || "")}" loading="lazy" onerror="imgRetry(this)">` : `<div style="width:84px;height:84px;border-radius:12px;background:var(--d3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">📦</div>`);
         const dj = JSON.stringify(p).replace(/'/g, "&apos;");
         const destId = String(d.id || "").replace(/'/g, "\\'");
         return `<div class="dest-badge">⭐ Destaque</div>
@@ -3128,10 +3146,10 @@
       if (!sec || !d) return;
       let navHtml = "";
       if (_destList.length > 1) {
+        // Setas circulares (dest-arr) removidas a pedido do dono — ficavam "bola no meio"
+        // toda vez que havia mais de 1 destaque ativo. Navegação continua pelos dots.
         const dotsHtml = _destList.map((_, i) => `<div class="dest-dot${i === idx ? " on" : ""}" onclick="event.stopPropagation();_destGoTo(${i})"></div>`).join("");
-        navHtml = `<button class="dest-arr dest-prev" onclick="event.stopPropagation();_destPrev()" aria-label="Destaque anterior">‹</button>
-          <button class="dest-arr dest-next" onclick="event.stopPropagation();_destNext()" aria-label="Próximo destaque">›</button>
-          <div class="dest-dots">${dotsHtml}</div>`;
+        navHtml = `<div class="dest-dots">${dotsHtml}</div>`;
       }
       sec.innerHTML = _destSlideHtml(d) + navHtml;
       sec.style.display = "block";
@@ -3198,7 +3216,7 @@
           const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
           const d = JSON.stringify(p).replace(/'/g, "&apos;");
           return `<div class="rpc" onclick='openP(${d})'>
-            <div class="rpc-img">${img ? `<img src="${img}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rpc-img-ph">📦</div>`}</div>
+            <div class="rpc-img">${img ? `<img src="${img}" loading="lazy" onerror="imgRetry(this)">` : `<div class="rpc-img-ph">📦</div>`}</div>
             <div class="rpc-body"><div class="rpc-name">${p["Nome do Produto"] || "—"}</div><div class="rpc-price">${fmt(pfv)}</div></div>
           </div>`;
         }).join("");
@@ -3275,7 +3293,7 @@
       return `<div class="pc" onclick='${esgotado ? "" : "openP(" + d + ")"}' style="${esgotado ? "opacity:.75;cursor:default" : ""}">
       ${esgotado ? `<div class="pb" style="background:#555;color:#fff">😔 Esgotado</div>` : badge}
       <div class="pm" style="position:relative">
-        ${imgs[0] ? `<img src="${imgs[0]}" alt="${(p["Nome do Produto"] || "").replace(/"/g, "")}" loading="lazy" onerror="this.style.display='none'">` : `<div class="pm-ph">📦</div>`}
+        ${imgs[0] ? `<img src="${imgs[0]}" alt="${(p["Nome do Produto"] || "").replace(/"/g, "")}" loading="lazy" onerror="imgRetry(this)">` : `<div class="pm-ph">📦</div>`}
         <div class="pm-ov"></div>
         ${imgs.length > 1 ? `<div class="pm-cnt">📷 ${imgs.length}</div>` : ""}
         ${esgotado ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px">ESGOTADO</div>` : ""}
@@ -3612,7 +3630,7 @@
       btn.disabled = false;
       el.innerHTML = cart.map((c, i) => `
     <div class="ci">
-      <div class="cithumb">${c.img ? `<img src="${c.img}" alt="" onerror="this.style.display='none'">` : "📦"}</div>
+      <div class="cithumb">${c.img ? `<img src="${c.img}" alt="" onerror="imgRetry(this)">` : "📦"}</div>
       <div class="ciinfo">
         <div class="cinm">${c.nome}</div>
         ${c.v ? `<div class="civar">${c.v}</div>` : ""}
@@ -3915,7 +3933,7 @@
         const d = JSON.stringify(p).replace(/'/g, "&apos;");
         return `<div class="rpc" onclick='openP(${d})'>
           <div class="rpc-img" style="position:relative">
-            ${img ? `<img src="${img}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rpc-img-ph">📦</div>`}
+            ${img ? `<img src="${img}" loading="lazy" onerror="imgRetry(this)">` : `<div class="rpc-img-ph">📦</div>`}
             <button class="fav-btn on" data-id="${p["ID"]}" onclick="toggleFav('${p["ID"]}',event)" style="width:22px;height:22px;font-size:11px;top:3px;left:3px">❤️</button>
           </div>
           <div class="rpc-body">
