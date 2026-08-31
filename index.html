@@ -3144,14 +3144,11 @@
       const sec = document.getElementById("destSec");
       const d = _destList[idx];
       if (!sec || !d) return;
-      let navHtml = "";
-      if (_destList.length > 1) {
-        // Setas circulares (dest-arr) removidas a pedido do dono — ficavam "bola no meio"
-        // toda vez que havia mais de 1 destaque ativo. Navegação continua pelos dots.
-        const dotsHtml = _destList.map((_, i) => `<div class="dest-dot${i === idx ? " on" : ""}" onclick="event.stopPropagation();_destGoTo(${i})"></div>`).join("");
-        navHtml = `<div class="dest-dots">${dotsHtml}</div>`;
-      }
-      sec.innerHTML = _destSlideHtml(d) + navHtml;
+      // Setas (dest-arr) e dots (dest-dots) removidos a pedido do dono — qualquer bola/controle
+      // no meio do Destaque some, seja com 1 ou vários destaques ativos. Com >1 ativo, só o
+      // primeiro da lista aparece agora (sem UI pra trocar) — se quiser rodar entre vários,
+      // a alternativa é auto-avanço por tempo em vez de controle manual.
+      sec.innerHTML = _destSlideHtml(d);
       sec.style.display = "block";
     }
     function _destPrev() { _destGoTo((_destIdx - 1 + _destList.length) % _destList.length); }
