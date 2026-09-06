@@ -2429,7 +2429,7 @@
     <h1 class="hh1" id="heroTitle">O lugar que tem <b>tudo</b></h1>
     <p class="hsub" id="heroSub">Eletrônicos, moda, casa e muito mais.<br>Parcele em até 12x com entrega rápida.</p>
     <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="hcta" onclick="document.getElementById('psec').scrollIntoView({behavior:'smooth'})">🛍️ Explorar Produtos ↓</button>
+      <button class="hcta" id="heroCta1" onclick="document.getElementById('psec').scrollIntoView({behavior:'smooth'})">🛍️ Explorar Produtos ↓</button>
       <a class="hcta" id="hcta" href="#" style="background:rgba(255,85,0,.12);color:var(--g);box-shadow:none;border:1px solid rgba(255,85,0,.3)">💬 Fale Conosco</a>
     </div>
   </div>
@@ -2972,10 +2972,13 @@
         // terminar (1 round-trip a mais de latência à toa, já que não depende de nada acima)
         const [cr, br, pr, fr, catR] = await Promise.all([apiG("getConfig"), apiG("getBanners"), apiG("getProdutos"), apiG("getFrete"), apiG("getCategorias").catch(() => null)]);
         cfg = cr.config || {};
-        // Hero configurável via planilha (chaves: HERO_TITULO, HERO_SUBTITULO, HERO_PILL)
+        // Hero configurável via planilha (chaves: HERO_TITULO, HERO_SUBTITULO, HERO_PILL,
+        // HERO_CTA1, HERO_CTA2 — aba Config, colunas Chave/Valor)
         if (cfg.HERO_TITULO) document.getElementById("heroTitle").innerHTML = cfg.HERO_TITULO;
         if (cfg.HERO_SUBTITULO) document.getElementById("heroSub").innerHTML = cfg.HERO_SUBTITULO;
         if (cfg.HERO_PILL) document.getElementById("heroPill").textContent = cfg.HERO_PILL;
+        if (cfg.HERO_CTA1) document.getElementById("heroCta1").innerHTML = cfg.HERO_CTA1;
+        if (cfg.HERO_CTA2) document.getElementById("hcta").innerHTML = cfg.HERO_CTA2;
         // Sort bar: ocultar se cfg.ORDENACAO_HABILITADA = "NAO"
         if (cfg.ORDENACAO_HABILITADA === "NAO") document.getElementById("sortBar").style.display = "none";
         const wpp = cfg.WHATSAPP || WPP0;
