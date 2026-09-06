@@ -6778,7 +6778,45 @@
       }
     }
 
-    function showBaixaReceipt(res, ped) {
+    // Otimiza URL de imagem (Cloudinary/Openinary) — este arquivo nunca teve cldOpt() (recibo
+    // usava URL crua/full-size direto, ao contrário do grid do index.html).
+    function cldOpt(url, w) {
+      if (!url) return url;
+      if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
+        const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+        return url.replace("/upload/", "/upload/" + params + "/");
+      }
+      if (url.includes("/t/") && !url.includes("/t/f_")) {
+        const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+        return url.replace("/t/", "/t/" + params + "/");
+      }
+      return url;
+    }
+    // Catálogo completo (inclui inativo) dedicado ao recibo — allProds do boot do admin é
+    // carregado sem verTodos, então pedido antigo com produto descontinuado ficava sem foto.
+    let _rcCatalogFull = null;
+    async function _rcGetCatalog() {
+      if (_rcCatalogFull) return _rcCatalogFull;
+      try {
+        const r = await apiGet("getProdutos", { verTodos: "1" });
+        _rcCatalogFull = r.produtos || allProds;
+      } catch (e) { _rcCatalogFull = allProds; }
+      return _rcCatalogFull;
+    }
+    // Espera as <img> do card carregarem (ou falharem) antes do html2canvas capturar — sem
+    // isso o recibo exportado saía sem foto quando a imagem ainda não tinha terminado de
+    // baixar do Openinary no instante do clique em "gerar imagem".
+    function _waitImgsLoaded(el, timeoutMs) {
+      const imgs = Array.from(el.querySelectorAll("img"));
+      if (!imgs.length) return Promise.resolve();
+      return Promise.race([
+        Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }))),
+        new Promise(res => setTimeout(res, timeoutMs || 4000))
+      ]);
+    }
+
+    async function showBaixaReceipt(res, ped) {
+      await _rcGetCatalog();
       const pedObj  = ped || currentDetailPed || {};
       const tel     = ((pedObj["Telefone"]) || (res && res.telefone) || "").replace(/\D/g, "");
       const nome    = pedObj["Nome Cliente"] || (res && res.nomeCliente) || "—";
@@ -6794,11 +6832,12 @@
 
       // Itens — layout com thumbnail (72×72), igual verRecibo do index.html
       const _rcProdImg = (nomeI) => {
-        if (!allProds || !allProds.length || !nomeI) return "";
+        const prods = (_rcCatalogFull && _rcCatalogFull.length) ? _rcCatalogFull : allProds;
+        if (!prods || !prods.length || !nomeI) return "";
         const n = String(nomeI).toLowerCase().trim();
-        const f = allProds.find(p => String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim() === n)
-          || allProds.find(p => { const pn = String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
-        return f ? String(f["Imagem 1 (URL)"] || f["Imagem URL"] || "").trim() : "";
+        const f = prods.find(p => String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim() === n)
+          || prods.find(p => { const pn = String(p["Nome do Produto"] || p["Nome"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
+        return f ? cldOpt(String(f["Imagem 1 (URL)"] || f["Imagem URL"] || "").trim(), 150) : "";
       };
       const itensRaw = String(pedObj["Itens"] || pedObj["Itens (JSON)"] || "").trim();
       let itensHtml = "";
@@ -7094,6 +7133,7 @@
         try {
           if (!window.html2canvas) await loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
           const card = document.getElementById("rcCard");
+          await _waitImgsLoaded(card);
           const canvas = await html2canvas(card, { scale: 2.5, backgroundColor: "#0F081D", useCORS: true, logging: false });
           canvas.toBlob(blob => {
             const file = new File([blob], `recibo-${idPed}.png`, { type: "image/png" });

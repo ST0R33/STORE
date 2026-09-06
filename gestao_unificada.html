@@ -1829,21 +1829,55 @@ function confirmarExcluirPedido(id) {
 }
 
 // ── RECIBO ────────────────────────────────────────────────────────
+// Otimiza URL de imagem (Cloudinary/Openinary) — este arquivo nunca teve cldOpt() (recibo
+// usava URL crua/full-size direto, ao contrário do grid do index.html).
+function cldOpt(url, w) {
+  if (!url) return url;
+  if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
+    const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+    return url.replace("/upload/", "/upload/" + params + "/");
+  }
+  if (url.includes("/t/") && !url.includes("/t/f_")) {
+    const params = "f_auto,q_auto" + (w ? ",w_" + w : "");
+    return url.replace("/t/", "/t/" + params + "/");
+  }
+  return url;
+}
+// Catálogo completo (inclui inativo) dedicado ao recibo, num cache próprio — não depende de
+// quando/como allProds foi preenchido em outro lugar da tela (ver mesmo achado em
+// GJ STORE/gestao_unificada.html: um boot-load sem verTodos em outro ponto do arquivo
+// bastava pra travar o guard "if (!allProds.length)" pra sempre).
+let _rcCatalogFull = null;
+async function _rcGetCatalog() {
+  if (_rcCatalogFull) return _rcCatalogFull;
+  try {
+    const r = await apiGet("getProdutos", { verTodos: "1" });
+    _rcCatalogFull = r.produtos || allProds;
+  } catch (e) { _rcCatalogFull = allProds; }
+  return _rcCatalogFull;
+}
+// Espera as <img> do card carregarem (ou falharem) antes do html2canvas capturar — sem isso
+// o recibo exportado saía sem foto quando a imagem ainda não tinha terminado de baixar.
+function _waitImgsLoaded(el, timeoutMs) {
+  const imgs = Array.from(el.querySelectorAll("img"));
+  if (!imgs.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }))),
+    new Promise(res => setTimeout(res, timeoutMs || 4000))
+  ]);
+}
 function _getProdImg(nome) {
-  if (!allProds.length) return "";
+  const prods = (_rcCatalogFull && _rcCatalogFull.length) ? _rcCatalogFull : allProds;
+  if (!prods.length) return "";
   const nNorm = _norm(nome);
-  const found = allProds.find(p => _norm(npGetProdNome(p)) === nNorm)
-    || allProds.find(p => _norm(npGetProdNome(p)).includes(nNorm) || nNorm.includes(_norm(npGetProdNome(p))));
-  return found ? String(found["Imagem 1 (URL)"] || found["Imagem URL"] || "").trim() : "";
+  const found = prods.find(p => _norm(npGetProdNome(p)) === nNorm)
+    || prods.find(p => _norm(npGetProdNome(p)).includes(nNorm) || nNorm.includes(_norm(npGetProdNome(p))));
+  return found ? cldOpt(String(found["Imagem 1 (URL)"] || found["Imagem URL"] || "").trim(), 150) : "";
 }
 
 async function showRecibo(pedId) {
-  // Carrega produtos para thumbnail se ainda não carregados.
-  // verTodos:1 é essencial aqui: pedido antigo pode conter produto que já foi inativado —
-  // sem isso o item aparece sem foto porque getProdutos filtra inativo por padrão.
-  if (!allProds.length) {
-    try { const r = await apiGet("getProdutos", { verTodos: "1" }); allProds = r.produtos || []; } catch {}
-  }
+  // Catálogo completo (inclui inativo) — cache próprio, nunca depende do estado de allProds.
+  await _rcGetCatalog();
   try {
   const p = allPeds.find(x => String(x["ID Pedido"]) === String(pedId));
   if (!p) { toast("Pedido #" + pedId + " não encontrado no cache. Faça sync.", "err"); return; }
@@ -2140,7 +2174,9 @@ async function gerarImagemRecibo() {
   const btn = document.getElementById("rcImgBtn");
   if (btn) { btn.textContent = "⏳..."; btn.disabled = true; }
   try {
-    const canvas = await html2canvas(document.getElementById("rcCard"), { backgroundColor: "#0F081D", scale: 2, useCORS: true });
+    const rcCardEl = document.getElementById("rcCard");
+    await _waitImgsLoaded(rcCardEl);
+    const canvas = await html2canvas(rcCardEl, { backgroundColor: "#0F081D", scale: 2, useCORS: true });
     canvas.toBlob(blob => {
       const file = new File([blob], "recibo-orahbuy.png", { type: "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {

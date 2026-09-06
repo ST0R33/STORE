@@ -4210,12 +4210,37 @@
 
     // Recibo do cliente com itens, parcelas e saldo
     const _RC_STORE = "ORAHBUY";
+    // Catálogo completo (inclui inativo) dedicado ao recibo — allProds do grid é só produto
+    // ativo, então pedido antigo com produto já descontinuado/renomeado nunca batia o nome
+    // e ficava sem foto no recibo.
+    let _rcCatalogFull = null;
+    async function _rcGetCatalog() {
+      if (_rcCatalogFull) return _rcCatalogFull;
+      try {
+        const r = await fetch(`${API}?action=getProdutos&verTodos=1`);
+        const d = await r.json();
+        _rcCatalogFull = d.produtos || allProds;
+      } catch (e) { _rcCatalogFull = allProds; }
+      return _rcCatalogFull;
+    }
+    // Espera as <img> do card carregarem (ou falharem) antes do html2canvas capturar — sem
+    // isso o recibo exportado saía sem foto quando a imagem ainda não tinha terminado de
+    // baixar do Openinary no instante do clique em "Baixar/Compartilhar imagem".
+    function _waitImgsLoaded(el, timeoutMs) {
+      const imgs = Array.from(el.querySelectorAll("img"));
+      if (!imgs.length) return Promise.resolve();
+      return Promise.race([
+        Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }))),
+        new Promise(res => setTimeout(res, timeoutMs || 4000))
+      ]);
+    }
     function _rcProdImg(nome) {
-      if (!allProds.length || !nome) return "";
+      const prods = (_rcCatalogFull && _rcCatalogFull.length) ? _rcCatalogFull : allProds;
+      if (!prods.length || !nome) return "";
       const n = String(nome).toLowerCase().trim();
-      const f = allProds.find(p => String(p["Nome do Produto"] || "").toLowerCase().trim() === n)
-        || allProds.find(p => { const pn = String(p["Nome do Produto"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
-      return f ? String(f["Imagem 1 (URL)"] || "").trim() : "";
+      const f = prods.find(p => String(p["Nome do Produto"] || "").toLowerCase().trim() === n)
+        || prods.find(p => { const pn = String(p["Nome do Produto"] || "").toLowerCase().trim(); return pn && (pn.includes(n) || n.includes(pn)); });
+      return f ? cldOpt(String(f["Imagem 1 (URL)"] || "").trim(), 150) : "";
     }
     function _rcDate(v) {
       if (!v) return "—";
@@ -4232,9 +4257,10 @@
       const pct = totalPed > 0 ? Math.min(100, Math.round(totalPago / totalPed * 100)) : 0;
       return { pagas, pendentes, totalPago, saldo, pct, quitado: saldo <= 0.01 };
     }
-    function verRecibo(id) {
+    async function verRecibo(id) {
       const p = _mcPedidos[id];
       if (!p) return;
+      await _rcGetCatalog();
       const nome = p.nome || "—", pag = p.formaPagamento || "—", dtPed = p.data || "—";
       const total = Number(p.total || 0), sub = Number(p.subtotal || total), desc = Number(p.desconto || 0);
       const obs = String(p.obs || ""), endereco = String(p.endereco || "").trim(), cep = String(p.cep || "").trim();
@@ -4337,7 +4363,9 @@
       const btn = document.getElementById("rcImgBtnCli");
       if (btn) { btn.textContent = "⏳ Gerando..."; btn.disabled = true; }
       try {
-        const canvas = await html2canvas(document.getElementById("rcCardCli"), { backgroundColor: "#04090f", scale: 2, useCORS: true });
+        const rcCardCliEl = document.getElementById("rcCardCli");
+        await _waitImgsLoaded(rcCardCliEl);
+        const canvas = await html2canvas(rcCardCliEl, { backgroundColor: "#04090f", scale: 2, useCORS: true });
         canvas.toBlob(blob => {
           const file = new File([blob], "recibo-orahbuy.png", { type: "image/png" });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
