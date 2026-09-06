@@ -2991,17 +2991,12 @@
         allProds = pr.produtos || [];
         prods = allProds;
         fretes = fr.fretes || [];
-        renderProds(prods);
-        updateBadge();
-        if (!sessionStorage.getItem('_pv')) {
-          sessionStorage.setItem('_pv', '1');
-          logAcao("PAGE_VIEW", document.referrer ? "referrer:" + document.referrer.split("/")[2] : "direct");
-        }
 
-        // Categorias dinâmicas — sempre a partir do getCategorias fresco (já roda em paralelo
-        // no Promise.all acima, não atrasa o boot). Pintar antes com um cache em localStorage
-        // (ob_cats) mostrava categoria já desabilitada pelo dono por um instante, até a
-        // resposta fresca chegar e corrigir — flash real, removido.
+        // Categorias dinâmicas — carregado ANTES do 1º render de produtos. Antes o boot
+        // chamava renderProds(prods) cru (sem filtrar categoria desabilitada) e só depois
+        // carregava allCats — produto de categoria desabilitada aparecia até o clique em
+        // algum filtro (applyF nunca rodava sozinho no boot). Agora só existe 1 render, já
+        // filtrado pela categoria ativa.
         try {
           const rc = catR || {};
           if (rc.categorias && rc.categorias.length) {
@@ -3009,6 +3004,13 @@
             renderDynCats(rc.categorias);
           }
         } catch(e) {}
+
+        applyF();
+        updateBadge();
+        if (!sessionStorage.getItem('_pv')) {
+          sessionStorage.setItem('_pv', '1');
+          logAcao("PAGE_VIEW", document.referrer ? "referrer:" + document.referrer.split("/")[2] : "direct");
+        }
 
         // Vistos recentemente
         renderViewedSection();
