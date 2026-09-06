@@ -3208,7 +3208,12 @@
         const nome = cfg.OWNER ? cfg.OWNER.split(" ")[0] : "";
         const titleEl = document.getElementById("viewedTitle");
         if (titleEl) titleEl.textContent = nome ? `Especialmente para você, ${nome} 👋` : "Vistos Recentemente";
-        track.innerHTML = viewed.slice(0, 8).map(p => {
+        // Preço/estoque sempre do allProds (catálogo atual, já sem cache — ver noCache em
+        // apiG), nunca do snapshot congelado no localStorage — senão o cliente continuava
+        // vendo o preço de quando visitou, mesmo depois do dono editar no admin. Fallback pro
+        // snapshot só se o produto sumiu do catálogo (descontinuado).
+        track.innerHTML = viewed.slice(0, 8).map(pSnap => {
+          const p = allProds.find(pp => String(pp["ID"]) === String(pSnap["ID"])) || pSnap;
           const pfv = pf(p);
           const img = cldOpt(p["Imagem 1 (URL)"] || "", 240);
           const d = JSON.stringify(p).replace(/'/g, "&apos;");
@@ -3383,12 +3388,12 @@
       // scarcity bar
       const scarcEl = document.getElementById("mscarcity");
       if (scarcEl) { scarcEl.style.display = estModal > 0 && estModal <= 3 ? "block" : "none"; if (estModal > 0 && estModal <= 3) scarcEl.textContent = `🔥 Restam apenas ${estModal} unidades!`; }
-      // pays + custom tags
+      // pays — Tags_Personalizadas (perfume/arabe/importado/...) NÃO entra aqui: já aparece
+      // no card do grid (tagHtml), colocar de novo embaixo de "Formas de Pagamento" fazia a
+      // tag de categoria parecer uma forma de pagamento ("PIX, Cartão, arabe, importado...").
       const pays = (p["Forma Pagamento"] || "PIX/Cartão").split("/");
-      const customTags = (p["Tags_Personalizadas"] || "").split(",").map(t => t.trim()).filter(Boolean);
       document.getElementById("ptags").innerHTML =
-        pays.map(x => `<div class="ptag">${x.trim()}</div>`).join("") +
-        customTags.map(t => `<span class="ptag-badge">${t}</span>`).join("");
+        pays.map(x => `<div class="ptag">${x.trim()}</div>`).join("");
       // vars
       const vars = (p["Variações (cor|tam|modelo)"] || "").split("|").map(v => v.trim()).filter(Boolean);
       const vw = document.getElementById("varw");
