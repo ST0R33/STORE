@@ -2998,14 +2998,14 @@
           logAcao("PAGE_VIEW", document.referrer ? "referrer:" + document.referrer.split("/")[2] : "direct");
         }
 
-        // Categorias dinâmicas
+        // Categorias dinâmicas — sempre a partir do getCategorias fresco (já roda em paralelo
+        // no Promise.all acima, não atrasa o boot). Pintar antes com um cache em localStorage
+        // (ob_cats) mostrava categoria já desabilitada pelo dono por um instante, até a
+        // resposta fresca chegar e corrigir — flash real, removido.
         try {
-          const cats = JSON.parse(localStorage.getItem("ob_cats") || "[]");
-          if (cats.length) { allCats = cats; renderDynCats(cats); }
           const rc = catR || {};
           if (rc.categorias && rc.categorias.length) {
             allCats = rc.categorias;
-            localStorage.setItem("ob_cats", JSON.stringify(rc.categorias));
             renderDynCats(rc.categorias);
           }
         } catch(e) {}
